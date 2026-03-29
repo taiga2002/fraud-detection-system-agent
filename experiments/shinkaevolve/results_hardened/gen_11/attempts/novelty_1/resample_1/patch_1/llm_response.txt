@@ -1,0 +1,102 @@
+<NAME>
+Introduce interaction features between high transaction volume and suspicious device activity, which are common in fraud patterns like ore ore scams. Also, adjust model hyperparameters to better handle noise.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Feature engineering block
+def engineer_evolved_features(df):
+    feats = pd.DataFrame(index=df.index)
+
+    # Log-transformed amount features
+    feats['log_amount'] = np.log1p(df['amount_jpy'])
+    
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+    
+    # New account + high amount interaction
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Late night + high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+    
+    # Weekend transfer risk
+    feats['weekend_transfer'] = df['receiver_is_new'].fillna(0) * (df['day_of_week'] >= 5).astype(int)
+
+    # High velocity + suspicious device
+    feats['velocity_suspicious'] = (np.log1p(df['txn_count_24h']) + 1) * df['sender_suspicious_device'].fillna(0)
+    
+    return feats
+=======
+# Feature engineering block
+def engineer_evolved_features(df):
+    feats = pd.DataFrame(index=df.index)
+
+    # Log-transformed amount features
+    feats['log_amount'] = np.log1p(df['amount_jpy'])
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = np.log(df['txn_volume_24h']) - np.log(df['txn_count_24h'] + 1)
+    
+    # New account + high amount interaction
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * (df['is_high_amount'].fillna(0))**2
+
+    # Late night + high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * (df['is_high_amount'].fillna(0))
+    
+    # Weekend transfer risk amplified by high volume/amount
+    feats['weekend_transfer_volume_amount'] = (df['day_of_week'] >= 5).astype(int) * \
+                                               ((np.log(df['txn_count_24h']) + np.log(df['amount_jpy'])) / np.sqrt(df['receiver_account_age_days'] + 1))
+
+    # Interaction between high transaction volume and suspicious device activity
+    feats['volume_suspicious_device_interaction'] = (df['txn_volume_24h'].fillna(0) > 5.0).astype(int) * df['sender_suspicious_device'].fillna(0)
+    
+    return feats
+>>>>>>> REPLACE
+
+</DIFF>
+<DIFF>
+<<<<<<< SEARCH
+# Model hyperparameters block
+def get_model_params():
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 31,
+        'learning_rate': 0.05,
+        'feature_fraction': 0.8,
+        'bagging_fraction': 0.7,
+        'max_depth': -1, # Unrestricted depth for flexibility
+        'min_child_samples': 40,
+        'scale_pos_weight': 20, # Higher to penalize false negatives more
+        'lambda_l1': 1.5,
+        'lambda_l2': 1.5,
+        'verbose': -1,
+    }
+=======
+# Model hyperparameters block
+def get_model_params():
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 40, # Larger leaves for better fitting complex relationships
+        'learning_rate': 0.03,
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.8,
+        'max_depth': -1, # Unlimited depth allows more complex models to capture noise patterns
+        'min_child_samples': 20,
+        'scale_pos_weight': 25, # Higher weight on positive class to penalize false negatives heavily
+        'lambda_l1': 1.0,
+        'lambda_l2': 1.0,
+    }
+>>>>>>> REPLACE
+
+</DIFF>

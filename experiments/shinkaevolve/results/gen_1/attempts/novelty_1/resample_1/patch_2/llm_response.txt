@@ -1,0 +1,72 @@
+<name_new_interaction_feature>
+Proposing a new interaction feature to capture high-velocity transfers from recently enabled internet banking accounts, which aligns well with common fraud patterns.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+feats['risk_velocity'] = df['sender_account_risk_score'].fillna(0) * (df['txn_count_24h'].fillna(0) + 1)
+=======
+# New interaction feature: high velocity from newly enabled internet banking
+feats['high_vel_new_ib'] = (df['is_high_amount'].fillna(0) *
+                             df['sender_ib_enabled'].fillna(0) *
+                             np.log(df['txn_count_24h'] + 1)) * 100
+
+# Amplify recent activity and high amount interactions
+feats['recent_activity_high_amount'] = (df['is_high_amount'].fillna(0) *
+                                        df['has_recent_activity'].fillna(0)) * 500
+
+# New interaction: balance drain with internet banking usage
+feats['balance_drain_new_ib'] = (df['balance_drain_ratio'].fillna(0) *
+                                 df['sender_ib_enabled'].fillna(0))
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DESCRIPTION>
+Adjust the model hyperparameters to better capture high-velocity and recent account activity patterns.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+    'num_leaves': 31,
+    'learning_rate': 0.05,
+    'feature_fraction': 0.85,
+    'bagging_fraction': 0.85,
+    'max_depth': 6,
+    'min_child_samples': 40,
+=======
+    'num_leaves': 27, 
+    'learning_rate': 0.1,
+    'feature_fraction': 0.5,
+    'bagging_fraction': 0.5,
+    'max_depth': 4,
+    'min_child_samples': 30,
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DESCRIPTION>
+Adjust the fusion score mechanism to better reflect risk from both transaction and account features.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+w_transfer = 0.80
+w_account = 0.20
+fused = w_transfer * transfer_risk_scores + w_account * account_risk_scores
+threshold = float(np.percentile(fused, 92))
+=======
+# Adjust weights for better risk balance between transaction and account features
+w_transfer = 0.75
+w_account = 0.15
+
+# New amplification factor on high-risk accounts
+fused = w_transfer * transfer_risk_scores + w_account * np.clip(account_risk_scores * 3, 0, 1)
+
+# Adjust threshold percentile to target higher alert rate for better fraud coverage
+threshold = float(np.percentile(fused, 95))
+>>>>>>> REPLACE
+
+</DIFF>

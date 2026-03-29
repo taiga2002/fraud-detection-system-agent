@@ -1,0 +1,14 @@
+{
+  "generation": 17,
+  "novelty_attempt": 1,
+  "resample_attempt": 1,
+  "patch_attempt": 2,
+  "success": false,
+  "num_applied": 0,
+  "patch_name": "none",
+  "patch_description": "none",
+  "error_msg": "SEARCH text not found in editable regions\n\nLooking for: \"feats['susp_device_ib_enable'] = np.log(df['sender_suspicious_device'].fillna(1)) * feats['ib_age_ratio']\"\n\nEditable regions where you can make changes:\n  Region 1 (lines 102-133):\n    def engineer_evolved_features(df):\n        feats = pd.DataFrame(index=df.index)\n    \n    ... (24 more lines)\n                                                 ((np.log(df['txn_volume_24h']) + np.log(df['amount_jpy'])) / np.sqrt(df['receiver_account_age_days'] + 1)) * df['is_late_night'].fillna(0)\n    \n        return feats\n\n  Region 2 (lines 136-153):\n    def get_model_params():\n        return {\n            'objective': 'binary',\n    ... (10 more lines)\n            'lambda_l2': 2.0,\n            'verbose': -1,\n        }\n\n  ... and 1 more regions\n\nQuick fixes:\n\u2022 Verify the text exists in the file\n\u2022 Check that you're searching within EVOLVE-BLOCK regions\n\u2022 Try a smaller, more specific search pattern",
+  "timestamp": "2026-03-21T01:28:01.962859",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

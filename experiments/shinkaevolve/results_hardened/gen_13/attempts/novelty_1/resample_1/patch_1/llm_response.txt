@@ -1,0 +1,36 @@
+<NAME>
+Add an interaction feature between weekend transfers and high-amount transactions, which are known patterns in fraud detection for Japanese banking.
+
+<DESCRIPTION>
+This new feature captures the behavior where large transfer amounts during weekends are indicative of fraudulent activities such as money laundering. Weekend transfers already have a higher risk score due to their unusual timing, but combining this with high transaction amounts can further highlight suspicious activity.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Interaction between high transaction volume and suspicious device activity
+feats['volume_suspicious_device_interaction'] = (df['txn_volume_24h'].fillna(0) > 5.0).astype(int) * df['sender_suspicious_device'].fillna(0)
+=======
+# Weekend transfer risk amplified by high volume/amount interaction with is_late_night
+feats['weekend_transfer_high_amount'] = (df['day_of_week'] >= 5).astype(int) * \
+                                         ((np.log(df['txn_volume_24h']) + np.log(df['amount_jpy'])) / np.sqrt(df['receiver_account_age_days'] + 1)) * df['is_late_night'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Tune the model's regularization parameters to better handle noise in the data.
+
+<DESCRIPTION>
+By adjusting lambda_l1 and lambda_l2, we can reduce overfitting to the noisy features introduced through feature engineering. Higher values of these parameters increase regularization.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+        'lambda_l1': 1.5,
+        'lambda_l2': 1.5,
+=======
+        'lambda_l1': 2.0,
+        'lambda_l2': 2.0,
+>>>>>>> REPLACE
+
+</DIFF>

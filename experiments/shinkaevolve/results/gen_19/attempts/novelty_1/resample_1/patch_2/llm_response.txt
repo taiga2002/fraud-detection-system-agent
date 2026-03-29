@@ -1,0 +1,69 @@
+<NAME>
+Create new features focusing on temporal patterns and interaction between account age and IB enablement.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+    # Interaction between recent IB enablement and account age
+    feats['balance_drain_recent_ib'] = (
+        df['balance_drain_ratio'].fillna(0) *
+        (df['sender_ib_days_since_enabled'].fillna(9999) <= 30)).clip(lower=0)
+
+    feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+
+    # Relative amount to mean transaction in recent window
+    feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = (df['txn_volume_24h'] / (df['txn_count_24h'] + 1)).clip(lower=0.0, upper=None)
+    
+    # Interaction between new account and high amount
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Balance drain with first transfer interaction
+    feats['drain_first_transfer_interaction'] = (df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)).clip(lower=0.0, upper=None)
+    
+    # Interaction between late night and high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Interaction between high velocity and suspicious device
+    feats['high_velocity_suspicious_device'] = (
+        ((df['txn_count_24h'].fillna(0) > 3) & (df['sender_suspicious_device'].fillna(0))).astype(int))
+
+    return feats
+=======
+    # Balance drain with recent IB enablement
+    feats['balance_drain_recent_ib'] = (
+        df['balance_drain_ratio'].fillna(0) *
+        (df['sender_ib_days_since_enabled'].fillna(9999) <= 30)).clip(lower=0)
+
+    feats['recent_IB_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+    
+    # Early morning transfers
+    feats['early_morning_transfer'] = np.where(((df['hour'] >= 6) & (df['hour'] <= 9)), 1, 0)
+
+    # Amount ratio to recent transactions
+    feats['amount_to_recent_avg_ratio'] = df['amount_jpy'] / (feats['avg_recent_txn_amount'] + 1)
+    
+    # Interaction between IB enablement and account age
+    feats['ib_age_interaction'] = np.where(
+        (df['sender_ib_days_since_enabled'].fillna(9999) <= 30),
+         df['sender_account_risk_score'], 0).clip(lower=0.0, upper=None)
+
+    # Interaction between new account and high amount
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+    
+    # Balance drain with first transfer interaction
+    feats['drain_first_transfer_interaction'] = (df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)).clip(lower=0.0, upper=None)
+
+    # Interaction between late night and high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+    
+    # High velocity with suspicious device interaction
+    feats['high_velocity_suspicious_device'] = (
+        ((df['txn_count_24h'].fillna(0) > 3) & (df['sender_suspicious_device'].fillna(0))).astype(int))
+
+    return feats
+>>>>>>> REPLACE
+
+</DIFF>

@@ -1,0 +1,14 @@
+{
+  "generation": 16,
+  "novelty_attempt": 1,
+  "resample_attempt": 2,
+  "patch_attempt": 1,
+  "success": true,
+  "num_applied": 1,
+  "patch_name": "none",
+  "patch_description": "This approach uses decision trees instead of LightGBM for anomaly detection in Japanese banking fraud scenarios. Decision trees are easier to interpret and can capture complex interactions without overfitting as much as gradient boosting models might. The feature engineering is adjusted to emphasize interaction features that capture known patterns of fraud (e.g., new accounts with large transfers). A decision tree classifier will be trained on these engineered features, followed by a fusion step combining the model scores with risk scores from sender accounts.\n\nThis should perform better because:\n- Decision trees are less prone to overfitting and can capture complex interactions naturally.\n- The interaction features are tailored towards fraud patterns in Japanese banking environments.\n- Fusion adds robustness by leveraging account-level risk data.",
+  "error_msg": null,
+  "timestamp": "2026-03-21T00:29:37.764664",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

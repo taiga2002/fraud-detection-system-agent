@@ -1,0 +1,7 @@
+==========Running program evaluation 1/3...==========
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[2]	val's auc: 1
+Evaluation error: name 'df' is not defined
+Correctness and error status saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results/gen_4/results/correct.json
+Metrics saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results/gen_4/results/metrics.json

@@ -1,0 +1,14 @@
+{
+  "generation": 10,
+  "novelty_attempt": 1,
+  "resample_attempt": 1,
+  "patch_attempt": 1,
+  "success": false,
+  "num_applied": 0,
+  "patch_name": "none",
+  "patch_description": "none",
+  "error_msg": "SEARCH text not found in editable regions\n\nLooking for 32-line block starting with: 'def engineer_evolved_features(df):'\n\nFull search pattern:\n```\ndef engineer_evolved_features(df):\n    \"\"\"\n    Create interaction features from the base transaction columns.\n\n    Available numeric columns:\n      amount_jpy, amount_log, balance_drain_ratio,\n      sender_account_age_days, sender_ib_days_since_enabled,\n      sender_account_risk_score, receiver_account_age_days,\n      txn_count_24h, txn_volume_24h, sender_mean_amount,\n      sender_std_amount, sender_txn_count, amount_zscore, hour\n\n    Available binary columns:\n      is_high_amount, is_very_high_amount, first_transfer,\n      sender_ib_enabled, sender_suspicious_device,\n      receiver_is_new, receiver_is_very_new, has_recent_activity,\n      amount_above_mean, amount_much_above_mean,\n      is_weekend, is_business_hours, is_late_night\n\n    Returns a DataFrame with new feature columns only.\n    \"\"\"\n    feats = pd.DataFrame(index=df.index)\n\n    # IB enablement ratio: how recently IB was enabled relative to account age\n    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)\n\n    # High amount transfer with recent IB enablement interaction\n    feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)\n\n    # Velocity score: rapid transfers in the past 24 hours\n    feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)\n\n    return feats\n```\n\nFound similar code block at line 75 (\u2713 editable):\n\nDifferences between search pattern and actual code:\n```diff\n+      # IB enablement ratio: how recently IB was enabled relative to account age\n-      return feats\n```\n\nEditable regions where you can make changes:\n  Region 1 (lines 74-108):\n    def engineer_evolved_features(df):\n        \"\"\"\n        Create interaction features from the base transaction columns.\n    ... (27 more lines)\n        feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)\n    \n        return feats\n\n  Region 2 (lines 111-131):\n    def get_model_params():\n        \"\"\"\n        Return the isolation forest parameters.\n    ... (13 more lines)\n                'max_samples': 256,\n            'random_state': 42,\n        }\n\n  ... and 1 more regions\n\nQuick fixes:\n\u2022 Check indentation - search text must match exactly including spaces/tabs\n\u2022 Look for typos in the search text\n\u2022 Try searching for just the first line instead of the full block",
+  "timestamp": "2026-03-21T00:09:46.163981",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

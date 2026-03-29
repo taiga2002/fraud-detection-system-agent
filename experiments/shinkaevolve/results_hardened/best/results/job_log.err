@@ -1,0 +1,30 @@
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log1p
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: divide by zero encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in sqrt
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log1p
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: divide by zero encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in sqrt
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log1p
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: divide by zero encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+/Users/tkitao1/Desktop/sakana-ai-2/venv/lib/python3.14/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in sqrt
+  result = getattr(ufunc, method)(*inputs, **kwargs)

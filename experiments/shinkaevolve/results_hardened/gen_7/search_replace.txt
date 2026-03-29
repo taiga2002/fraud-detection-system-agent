@@ -1,0 +1,53 @@
+<NAME>
+Introduce a feature capturing the ratio of transaction volume to account age, which can indicate rapid draining behavior in new accounts.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['velocity_suspicious'] = (np.log1p(df['txn_count_24h']) + 1) * df['sender_suspicious_device'].fillna(0)
+
+return feats
+
+def get_model_params():
+    return {
+        'objective': 'binary',
+=======
+feats['velocity_suspicious'] = (np.log1p(df['txn_count_24h']) + 1) * df['sender_suspicious_device'].fillna(0)
+
+# New feature: ratio of transaction volume to account age (rapid draining indicator)
+feats['volume_to_age_ratio'] = df['txn_volume_24h'].fillna(1e-6) / ((df['sender_account_age_days']).fillna(999) + 1)
+
+return feats
+
+def get_model_params():
+    return {
+        'objective': 'binary',
+>>>>>>> REPLACE
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 31,
+        'learning_rate': 0.05,
+        'feature_fraction': 0.8,
+        'bagging_fraction': 0.7,
+        'max_depth': -1, # Unrestricted depth for flexibility
+        'min_child_samples': 40,
+        'scale_pos_weight': 20, # Higher to penalize false negatives more
+        'lambda_l1': 1.5,
+        'lambda_l2': 1.5,
+        'verbose': -1,
+    }
+
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+    w_transfer = 0.90 # Higher weight on transfer risk model output
+    w_account = 0.10
+
+    fused_scores = np.where(account_risk_scores > 0.3,
+                            np.clip(w_transfer * transfer_risk_scores + w_account * (account_risk_scores ** 2), 0, 1),
+                            w_transfer * transfer_risk_scores + w_account * account_risk_scores)
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    threshold = np.percentile(fused_scores, 95) if np.any(account_risk_scores > 0.3) else np.percentile(fused_scores, 92)
+
+    return fused_scores, threshold
+
+</DIFF>

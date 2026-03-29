@@ -1,0 +1,23 @@
+<NAME>
+Adjust LightGBM parameters to better handle class imbalance and reduce overfitting risk.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'max_depth': 6,
+'min_child_samples': 40,
+=======
+# Deeper trees for better model capacity
+'max_depth': 8,
+
+# Increase min_child_samples to control overfitting
+'min_child_samples': 50,
+
+# Reduce learning rate and increase number of iterations
+'learning_rate': 0.02,
+
+# Use higher regularization to prevent overfitting
+'lambda_l1': 1.0,
+>>>>>>> REPLACE
+
+</DIFF>

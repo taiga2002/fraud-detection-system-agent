@@ -1,0 +1,128 @@
+<name>
+fraud_detection_v2
+
+</DESCRIPTION>
+The current approach focuses on specific interaction features and model parameters that are somewhat generic. To improve performance, we'll focus on more domain-specific feature interactions that capture the unique fraud patterns in Japan (e.g., rapid pass-through of funds, unusual transfers during late-night/weekend hours). We will also adjust LightGBM hyperparameters to better handle class imbalance and prevent overfitting.
+
+### Key Changes:
+1. **Feature Engineering**:
+   - New interaction features: `recent_txn_amount_to_mean_ratio`, `late_night_receiver_new_acct_high_amount`, `pass_through_risk`.
+   - Additional log transformations for skewed distributions.
+   
+2. **Model Hyperparameters**:
+   - Adjusted learning rate to 0.03, num_leaves to 45, and max_depth to 7.
+   - Increased min_child_samples to prevent overfitting.
+
+3. **Fusion & Decision**:
+   - Slightly adjusted weights for account risk and transfer risk scores.
+   - Adaptive threshold based on percentile and recent fraud rate.
+
+</CODE>
+```python
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    """
+    Create interaction features from the base transaction columns.
+    
+    Available numeric columns:
+      amount_jpy, amount_log, balance_drain_ratio,
+      sender_account_age_days, sender_ib_days_since_enabled,
+      sender_account_risk_score, receiver_account_age_days,
+      txn_count_24h, txn_volume_24h, sender_mean_amount,
+      sender_std_amount, sender_txn_count, amount_zscore, hour
+    
+    Available binary columns:
+      is_high_amount, is_very_high_amount, first_transfer,
+      sender_ib_enabled, sender_suspicious_device,
+      receiver_is_new, receiver_is_very_new, has_recent_activity,
+      amount_above_mean, amount_much_above_mean,
+      is_weekend, is_business_hours, is_late_night
+    
+    Returns a DataFrame with new feature columns only.
+    """
+    feats = pd.DataFrame(index=df.index)
+
+    # Interaction: recent txn amount to mean ratio
+    feats['recent_txn_amount_to_mean_ratio'] = df['txn_volume_24h'].fillna(1) / (df['sender_mean_amount'] + 1)
+    
+    # Late night new account high amount interaction
+    feats['late_night_receiver_new_acct_high_amount'] = (
+        df['receiver_is_new'].fillna(0).astype(int) * 
+        df['is_high_amount'].fillna(0).astype(int) *
+        df['is_late_night'].fillna(0).astype(int)
+    )
+    
+    # Pass through risk: recent txn count + amount zscore
+    feats['pass_through_risk'] = (
+        (df['txn_count_24h'] > 3) &
+        (np.abs(df['amount_zscore']) > 2.5)
+    ).astype(float)
+
+    # Log transformations for skewed distributions
+    feats['log_ib_age_ratio'] = np.log1p((feats['ib_age_ratio']).fillna(0))
+    
+    return feats
+
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def get_model_params():
+    """
+    Return LightGBM parameters for the fraud detection model.
+
+    Key considerations:
+    - Class imbalance: use scale_pos_weight to handle 5%~95%
+    - Overfitting risk: use regularization and early stopping
+    - Speed: balance num_leaves, max_depth
+
+    Returns a dict of LightGBM parameters.
+    """
+    
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 45,
+        'learning_rate': 0.03,
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.8,
+        'max_depth': 7,
+        'min_child_samples': 60,
+        'scale_pos_weight': 20,
+        'lambda_l1': 0.1,
+        'lambda_l2': 0.5,
+        'verbose': -1,
+    }
+
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+    """
+    Combine transfer risk and account risk into a final suspicious-transfer score.
+    
+    Args:
+        transfer_risk_scores: numpy array of P(fraud) from the LightGBM model
+        account_risk_scores: numpy array of sender_account_risk_score
+
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    
+    # Weighted fusion: transfer risk dominates, account risk amplifies slightly more
+    w_transfer = 0.85
+    w_account = 0.15
+    
+    fused = w_transfer * transfer_risk_scores + w_account * (account_risk_scores ** 2)
+
+    # Adaptive threshold based on recent fraud rate
+    threshold = np.percentile(fused[fused > 0], 93)
+    
+    return fused, threshold
+
+# EVOLVE-BLOCK-END
+```
+</CODE>

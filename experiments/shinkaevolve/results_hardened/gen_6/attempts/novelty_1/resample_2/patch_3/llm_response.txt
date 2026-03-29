@@ -1,0 +1,30 @@
+<NAME>
+Add new interaction features based on temporal patterns and amount interactions to capture more fraud signals.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+=======
+# Interaction features
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+
+# Temporal patterns
+feats['weekend_with_high_volume'] = (df['txn_count_24h'].fillna(0) > 1) * df['is_weekend'].fillna(0)
+feats['late_night_with_high_amount'] = df['amount_jpy'].apply(lambda x: int(x > 500000)) * df['is_late_night']
+feats['weekend_with_suspicious_device'] = df['sender_suspicious_device'].fillna(0) * df['is_weekend']
+
+# Amount interactions
+feats['amount_per_txn'] = df['txn_volume_24h'].fillna(1) / (df['txn_count_24h'] + 1)
+feats['ratio_to_account_age'] = df['amount_jpy'] / (df['receiver_account_age_days'] + 1)
+
+# Velocity with suspicious device
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>

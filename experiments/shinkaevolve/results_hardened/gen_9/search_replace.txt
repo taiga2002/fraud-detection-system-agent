@@ -1,0 +1,21 @@
+<NAME>
+Create an interaction feature for high-amount transfers during non-business hours, which is common in fraud patterns.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Late night + high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# Late night + high amount risk during non-business hours (including weekends)
+non_business_hours_mask = (df['hour'] < 9) | (df['hour'] >= 21) | df['is_weekend']
+feats['late_night_weekday_high_amount'] = ((df['hour'] >= 9) & (df['hour'] < 21)).astype(int).fillna(0)
+feats['non_business_hours_high_amount'] = non_business_hours_mask.astype(int).fillna(0) * df['is_high_amount'].fillna(0)
+
+# Combine into a single feature
+feats['high_amount_non_business_hours'] = feats['late_night_weekday_high_amount'] + feats['non_business_hours_high_amount']
+del feats['late_night_weekday_high_amount'], feats['non_business_hours_high_hours']
+
+>>>>>>> REPLACE
+
+</DIFF>

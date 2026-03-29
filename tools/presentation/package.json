@@ -1,0 +1,18 @@
+{
+  "name": "sakana-ai-2",
+  "version": "1.0.0",
+  "description": "Using **ShinkaEvolve** to evolve an ML fraud detection pipeline — features, hyperparameters, and fusion logic — for Japanese online banking scams. The LLM discovers domain-specific interaction features that improve F1 by 45% on realistic (hardened) data.",
+  "main": "create_presentation_visual.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}

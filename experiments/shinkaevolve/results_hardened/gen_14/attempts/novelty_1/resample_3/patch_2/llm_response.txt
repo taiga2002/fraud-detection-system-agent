@@ -1,0 +1,29 @@
+<NAME>
+Add interaction features focusing on temporal patterns and device suspicion, as these are key indicators for fraud in Japanese banking environments.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# New account + high amount interaction
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Late night + high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# New account + high amount interaction
+feats['new_acct_high_amount'] = df['receiver_is_new'].astype(int) * df['is_high_amount'].astype(int)
+
+# Late night + high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].astype(int) * df['is_high_amount'].astype(int)
+    
+# Weekend transfer interaction with high transaction volume/amount
+feats['weekend_transfer_volume_amount'] = (df['day_of_week'] >= 5).astype(int) * (np.log(df['txn_count_24h']) + np.log1p(df['amount_jpy']))
+
+# Suspicious device and IB enablement time interaction
+feats['suspicious_device_with_ib_enable'] = df['sender_suspicious_device'].fillna(0) * (np.log((df['sender_ib_days_since_enabled'].fillna(9999) + 1)))
+
+# Additional interaction for late night with high transaction volume/amount
+feats['late_night_txn_volume'] = df['is_late_night'].astype(int) * np.log(df['txn_count_24h'])
+>>>>>>> REPLACE
+
+</DIFF>

@@ -1,0 +1,14 @@
+{
+  "generation": 14,
+  "novelty_attempt": 1,
+  "resample_attempt": 1,
+  "patch_attempt": 1,
+  "success": false,
+  "num_applied": 0,
+  "patch_name": "none",
+  "patch_description": "none",
+  "error_msg": "SEARCH text not found in editable regions\n\nLooking for 5-line block starting with: '# Interaction between recent IB enablement and account age'\n\nFull search pattern:\n```\n# Interaction between recent IB enablement and account age\nfeats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)\n\n# High amount transfer with recent IB enablement interaction\nfeats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)\n```\n\nFound similar code block at line 98 (\u2713 editable):\n\nDifferences between search pattern and actual code:\n```diff\n-  # Interaction between recent IB enablement and account age\n-  feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)\n+      # IB enablement ratio: how recently IB was enabled relative to account age\n+      feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)\n-  # High amount transfer with recent IB enablement interaction\n-  feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)\n+      # High amount transfer with recent IB enablement interaction\n+      feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)\n```\n\nEditable regions where you can make changes:\n  Region 1 (lines 74-108):\n    def engineer_evolved_features(df):\n        \"\"\"\n        Create interaction features from the base transaction columns.\n    ... (27 more lines)\n        feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)\n    \n        return feats\n\n  Region 2 (lines 111-131):\n    def get_model_params():\n        \"\"\"\n        Return the isolation forest parameters.\n    ... (13 more lines)\n                'max_samples': 256,\n            'random_state': 42,\n        }\n\n  ... and 1 more regions\n\nQuick fixes:\n\u2022 Verify the text exists in the file\n\u2022 Check that you're searching within EVOLVE-BLOCK regions\n\u2022 Try a smaller, more specific search pattern",
+  "timestamp": "2026-03-21T00:18:58.877761",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

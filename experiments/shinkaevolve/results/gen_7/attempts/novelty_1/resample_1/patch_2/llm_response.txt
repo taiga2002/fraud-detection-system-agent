@@ -1,0 +1,61 @@
+<NAME>
+Add an interaction feature to capture high velocity with suspicious device.
+
+<DESCRIPTION>
+This new interaction captures scenarios where a user with recent internet banking access and possibly fraudulent activity (suspicious device) engages in rapid transactions, which can indicate a money muling operation.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Velocity risk amplified by suspicious device flag
+feats['velocity_suspicious_device'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+=======
+# Interaction between high velocity and suspicious device
+feats['high_velocity_suspicious_device'] = (
+    ((df['txn_count_24h'].fillna(0) > 3) & (df['sender_suspicious_device'].fillna(0))).astype(int))
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Add a feature to capture balance drain with recent IB enablement.
+
+<DESCRIPTION>
+This interaction captures the scenario where funds are rapidly drained from an account shortly after internet banking is enabled, which often indicates a mule setup. This feature can help identify accounts that might be abused for money laundering purposes.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+    
+# Relative amount to mean transaction in recent window
+feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+=======
+# Balance drain with recent IB enablement
+feats['balance_drain_recent_ib'] = (
+    df['balance_drain_ratio'].fillna(0) *
+    (df['sender_ib_days_since_enabled'].fillna(9999) <= 30)).clip(lower=0)
+
+feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+    
+# Relative amount to mean transaction in recent window
+feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Increase the learning rate to improve model convergence speed.
+
+<DESCRIPTION>
+A higher learning rate can help the model converge faster, especially with large datasets. It may also lead to better performance if the initial weights are being updated more aggressively.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'learning_rate': 0.08,
+=======
+'learning_rate': 0.15,
+>>>>>>> REPLACE
+
+</DIFF>

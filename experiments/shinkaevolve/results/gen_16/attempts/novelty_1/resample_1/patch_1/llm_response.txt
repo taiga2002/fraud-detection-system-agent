@@ -1,0 +1,142 @@
+<NAME>
+Add interaction features focusing on recent IB enablement and suspicious device activity, which are strong signals for fraud in Japan.
+
+<DESCRIPTION>
+- Add an interaction feature between `sender_suspicious_device` and `recent_IB_enablement`, as both indicate a high risk of fraudulent activity.
+- Include a velocity score that captures the intensity of transactions combined with suspected device usage.
+- Introduce a balance drain ratio adjusted by recent IB enablement to emphasize accounts newly enabled for internet banking.
+
+<DIFF>
+<<<<<<< SEARCH
+# Original code to find and replace (must match exactly including indentation)
+feats = pd.DataFrame(index=df.index)
+
+feats['balance_drain_recent_ib'] = (
+    df['balance_drain_ratio'].fillna(0) *
+    np.where(df['sender_ib_days_since_enabled'].fillna(9999) <= 30, 1, 0)).clip(lower=0)
+
+feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+
+feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+
+feats['avg_recent_txn_amount'] = (df['txn_volume_24h'] / (df['txn_count_24h'] + 1)).clip(lower=0.0, upper=None)
+
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+feats['drain_first_transfer_interaction'] = (df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)).clip(lower=0.0, upper=None)
+
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+
+feats['high_velocity_weighted_device'] = (df['txn_count_24h'].fillna(0) * df['sender_suspicious_device'].fillna(0)).clip(lower=0)
+=======
+feats = pd.DataFrame(index=df.index)
+
+# Balance drain adjusted by recent IB enablement
+feats['balance_drain_recent_ib'] = (
+    df['balance_drain_ratio'].fillna(0) *
+    np.where(df['sender_ib_days_since_enabled'].fillna(9999) <= 30, 1, 0)).clip(lower=0)
+
+# Recent IB age ratio adjusted for suspicious activity
+feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / ((df['sender_account_age_days'] + 1) * (1+ df['sender_suspicious_device']))).clip(lower=0.01, upper=None)
+
+# Amount to mean ratio adjusted by suspicious device
+feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+feats['suspicious_device_amount_ratio'] = feats['amount_to_mean_ratio'] * df['sender_suspicious_device']
+
+# Velocity intensity with suspicious device interaction
+feats['avg_recent_txn_amount'] = (df['txn_volume_24h'] / (df['txn_count_24h'] + 1)).clip(lower=0.0, upper=None)
+feats['high_velocity_weighted_device'] = feats['avg_recent_txn_amount'] * df['sender_suspicious_device']
+
+# Interaction between new account and high amount
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Balance drain with first transfer interaction
+feats['drain_first_transfer_interaction'] = (df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)).clip(lower=0.0, upper=None)
+
+# Interaction between late night and high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Adjust model hyperparameters to better handle the interaction features, specifically improving regularization to prevent overfitting and fine-tuning learning rate for optimal convergence.
+
+<DESCRIPTION>
+- Adjust `num_leaves` to a higher value (48) to accommodate more complex interactions.
+- Increase `learning_rate` slightly to 0.15 to ensure faster model training without sacrificing accuracy.
+- Tighten regularization with `lambda_l1` and `lambda_l2`.
+- Balance feature & bagging fractions for robustness.
+
+<DIFF>
+<<<<<<< SEARCH
+# Original code to find and replace (must match exactly including indentation)
+return {
+    'objective': 'binary',
+    'metric': 'auc',
+    'boosting_type': 'gbdt',
+'num_leaves': 25,
+        # Smaller learning rate for better convergence with more regularized model
+'learning_rate': 0.07,
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.75,
+        'bagging_freq': 5,
+        'max_depth': -1,  # allow unlimited depth for flexibility
+        'min_child_samples': 40,
+        'scale_pos_weight': 20,  # higher weight to handle class imbalance
+        'lambda_l1': 0.3,
+        'lambda_l2': 1.5,
+        'verbose': -1,
+}
+=======
+return {
+    'objective': 'binary',
+    'metric': 'auc',
+    'boosting_type': 'gbdt',
+'num_leaves': 48,
+        # Larger learning rate for faster convergence
+'learning_rate': 0.15,
+        'feature_fraction': 0.6,
+        'bagging_fraction': 0.7,
+        'bagging_freq': 3,
+        'max_depth': -1,  # allow unlimited depth for flexibility
+        'min_child_samples': 40,
+        'scale_pos_weight': 25,  # higher weight to handle class imbalance
+        'lambda_l1': 1.0,
+        'lambda_l2': 3.0,
+        'verbose': -1,
+}
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Enhance the fusion score computation by introducing non-linear interactions between transfer risk and account risk scores.
+
+<DESCRIPTION>
+- Modify how `account_risk_scores` are weighted using a logistic function to capture high-risk accounts more aggressively.
+- Adjust the threshold calculation for improved sensitivity in identifying potential fraud cases.
+
+<DIFF>
+<<<<<<< SEARCH
+# Original code to find and replace (must match exactly including indentation)
+w_transfer = 0.85
+    w_account = np.power(account_risk_scores + 0.1, 2) * 0.15
+
+    fused = w_transfer * transfer_risk_scores + w_account
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused, 92))
+=======
+# Adjust non-linear interaction between transfer risk and account risk with logistic weighting
+w_transfer = 0.85
+    w_account = np.power(account_risk_scores + 0.1) / (1 + np.exp(-account_risk_scores)) * 0.15
+
+    fused = w_transfer * transfer_risk_scores + w_account
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges with more sensitivity
+    threshold = float(np.percentile(fused, 93))
+>>>>>>> REPLACE
+
+</DIFF>

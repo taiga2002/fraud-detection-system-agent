@@ -1,0 +1,51 @@
+<NAME>
+Add log transformation to amount_jpy and interaction between sender_ib_enabled and other features to capture riskier patterns.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+=======
+# Apply log transformation to amount_jpy for better distribution handling
+feats['log_amount_jpy'] = np.log(df['amount_jpy'] + 1)
+
+# Ratio between IB enabled days and sender account age
+feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+
+# Interaction effect: high amount when IB is enabled
+feats['high_amount_with_IB'] = df['is_high_amount'].astype(int) * df['sender_ib_enabled'].astype(int)
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# Interaction effect: new account with IB enabled and high amount
+feats['new_acct_IB_high_amount'] = df['receiver_is_new'].astype(int) * df['sender_ib_enabled'].astype(int) * df['is_high_amount'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DIFF>
+<<<<<<< SEARCH
+    'max_depth': 6,
+=======
+    'max_depth': 5, # Moderate depth to prevent overfitting noisy data
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DIFF>
+<<<<<<< SEARCH
+w_transfer = 0.80
+w_account = 0.20
+
+fused = w_transfer * transfer_risk_scores + w_account * account_risk_scores
+=======
+# Weighted fusion: transfer risk dominates, account risk amplifies with higher weight due to new features
+w_transfer = 0.75
+w_account = 0.30
+
+fused = w_transfer * transfer_risk_scores + w_account * (account_risk_scores ** 2)
+>>>>>>> REPLACE
+
+</DIFF>

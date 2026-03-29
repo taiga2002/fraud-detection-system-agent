@@ -1,0 +1,62 @@
+<NAME>
+Add interaction features combining sender account risk score, recent high amount transfers, and late night activity.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['drain_first_transfer'] = df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# New interaction features
+feats['risk_high_transfer'] = df['sender_account_risk_score'].fillna(0) * (df['amount_above_mean'].fillna(0))
+
+feats['drain_first_transfer'] = df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Late night + risk + high amount interaction
+feats['late_night_risk_high_amount'] = df['is_late_night'].fillna(0) * (df['receiver_is_new'].fillna(0)) * df['sender_account_risk_score']
+
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Adjust the model's max_depth and learning rate for better balance between depth and regularization.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'max_depth': 6,
+'learning_rate': 0.05,
+=======
+'max_depth': 7,  # Slightly deeper to capture complex interactions
+'learning_rate': 0.03,  # Slower learning rate for stability
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Modify the fusion function to give more weight to high-risk account scores.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+w_account = 0.20
+
+fused = w_transfer * transfer_risk_scores + w_account * account_risk_scores
+
+high_account_risk = account_risk_scores > 0.3
+fused = np.where(high_account_risk, np.clip(fused * 1.2, 0, 1), fused)
+=======
+# Higher weight for high-risk accounts
+w_account = 0.25
+
+fused = w_transfer * transfer_risk_scores + w_account * account_risk_scores
+
+# Boost score more aggressively if account risk is high
+high_account_risk = account_risk_scores > 0.4
+fused = np.where(high_account_risk, np.clip(fused * 1.5, 0, 1), fused)
+>>>>>>> REPLACE
+
+</DIFF>

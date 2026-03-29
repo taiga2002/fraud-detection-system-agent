@@ -1,0 +1,41 @@
+==========Running program evaluation 1/3...==========
+[LightGBM] [Info] Number of positive: 767, number of negative: 7233
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.000439 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 6213
+[LightGBM] [Info] Number of data points in the train set: 8000, number of used features: 28
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.095875 -> initscore=-2.243922
+[LightGBM] [Info] Start training from score -2.243922
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[3]	val's auc: 0.777854
+==========Run 1/3 completed in 0.33 seconds==========
+==========Running program evaluation 2/3...==========
+[LightGBM] [Info] Number of positive: 804, number of negative: 7196
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.000544 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 6208
+[LightGBM] [Info] Number of data points in the train set: 8000, number of used features: 28
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.100500 -> initscore=-2.191681
+[LightGBM] [Info] Start training from score -2.191681
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[4]	val's auc: 0.725082
+==========Run 2/3 completed in 0.33 seconds==========
+==========Running program evaluation 3/3...==========
+[LightGBM] [Info] Number of positive: 781, number of negative: 7219
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.000655 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 6206
+[LightGBM] [Info] Number of data points in the train set: 8000, number of used features: 28
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.097625 -> initscore=-2.223897
+[LightGBM] [Info] Start training from score -2.223897
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[17]	val's auc: 0.741842
+==========Run 3/3 completed in 0.47 seconds==========
+Correctness and error status saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results_hardened/gen_8/results/correct.json
+Metrics saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results_hardened/gen_8/results/metrics.json

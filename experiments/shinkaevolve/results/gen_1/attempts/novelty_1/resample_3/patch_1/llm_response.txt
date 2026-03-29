@@ -1,0 +1,19 @@
+<NAME>
+Create an interaction feature between IB enablement timing and high-amount transfers, leveraging domain knowledge about mule accounts in Japan.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# High amount transaction with recently enabled IB is a strong indicator of fraud
+feats['ib_enable_high_amount'] = (df['sender_ib_enabled'].astype(int).fillna(0) *
+                                  df['is_high_amount'].fillna(0))
+
+# Interaction between account age and IB enablement timing relative to high amounts
+feats['age_to_ib_ratio_high_amount'] = ((df['sender_account_age_days'] / 
+                                         (df['sender_ib_days_since_enabled'].fillna(9999) + 1)) *
+                                        df['is_high_amount'].fillna(0))
+>>>>>>> REPLACE
+
+</DIFF>

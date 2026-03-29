@@ -1,0 +1,14 @@
+{
+  "generation": 9,
+  "novelty_attempt": 1,
+  "resample_attempt": 1,
+  "patch_attempt": 1,
+  "success": false,
+  "num_applied": 0,
+  "patch_name": "none",
+  "patch_description": "Adjust the LightGBM parameters to better handle class imbalance and reduce overfitting risk.",
+  "error_msg": "SEARCH text not found in editable regions\n\nLooking for 2-line block starting with: \"'max_depth': 6,\"\n\nFull search pattern:\n```\n'max_depth': 6,\n    'min_child_samples': 40,\n```\n\nFound similar text (but not exact match):\n  Line 117: 'max_samples': 256, (\u2713 editable)\n\nEditable regions where you can make changes:\n  Region 1 (lines 74-105):\n    def engineer_evolved_features(df):\n        \"\"\"\n        Create interaction features from the base transaction columns.\n    ... (24 more lines)\n        feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)\n    \n        return feats\n\n  Region 2 (lines 108-121):\n    def get_model_params():\n        \"\"\"\n        Return the isolation forest parameters.\n    ... (6 more lines)\n            'contamination': 0.05,  # Estimate contamination based on fraud rate\n            'random_state': 42,\n        }\n\n  ... and 1 more regions\n\nQuick fixes:\n\u2022 Check indentation - search text must match exactly including spaces/tabs\n\u2022 Look for typos in the search text\n\u2022 Try searching for just the first line instead of the full block",
+  "timestamp": "2026-03-21T00:07:14.078394",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

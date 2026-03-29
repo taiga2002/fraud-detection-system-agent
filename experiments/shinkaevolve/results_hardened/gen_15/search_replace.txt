@@ -1,0 +1,51 @@
+<NAME>
+Introduce a new feature focusing on high transaction volume and suspicious device interaction, which could help catch mule accounts that exhibit bursty behavior and use compromised devices.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+=======
+feats['bursty_behavior_suspicious'] = ((np.log(df['txn_volume_24h']) / np.log(df['txn_count_24h'])).fillna(999)) * df['sender_suspicious_device'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DESCRIPTION>
+Optimize the feature engineering by applying log transformations to volume and count features before interaction, which better captures bursty transaction patterns.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+=======
+feats['avg_recent_txn_logamount'] = np.log(df['txn_volume_24h']) - np.log(df['txn_count_24h'])
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DESCRIPTION>
+Increase regularization to tackle noise better and potentially prevent overfitting.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'lambda_l1': 0.1,
+=======
+'lambda_l1': 0.3,
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DESCRIPTION>
+Adjust the model's learning rate for faster convergence during training while avoiding overshooting optimal performance.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'learning_rate': 0.05,
+=======
+'learning_rate': 0.1,
+>>>>>>> REPLACE
+
+</DIFF>

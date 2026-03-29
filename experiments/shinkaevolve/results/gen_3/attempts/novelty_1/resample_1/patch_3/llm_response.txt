@@ -1,0 +1,83 @@
+<NAME>
+Add interaction feature for suspicious device and IB enablement timing, which are both critical in fraud detection according to domain knowledge.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['velocity_suspicious_device'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+
+return feats
+
+def get_model_params():
+    """
+    Return LightGBM parameters for the fraud detection model.
+
+    Key considerations:
+    - Class imbalance: ~5% fraud vs 95% normal (use scale_pos_weight)
+    - Overfitting risk: use regularization and random feature/subsampling
+    - Speed: moderate num_leaves and max_depth for fast training
+
+    Returns a dict of LightGBM parameters.
+    """
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 31,
+        'learning_rate': 0.08,
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.75,
+        'bagging_freq': 5,
+        'max_depth': -1,  # allow unlimited depth for flexibility
+        'min_child_samples': 40,
+        'scale_pos_weight': 20,  # higher weight to handle class imbalance
+        'lambda_l1': 0.3,
+        'lambda_l2': 1.5,
+        'verbose': -1,
+    }
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+=======
+feats['velocity_suspicious_device'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+
+# New interaction feature: suspicious device with recent IB enablement
+feats['suspicious_ib_age_ratio'] = df['sender_suspicious_device'].fillna(0) * (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+
+return feats
+
+def get_model_params():
+    """
+    Return LightGBM parameters for the fraud detection model.
+
+    Key considerations:
+    - Class imbalance: ~5% fraud vs 95% normal (use scale_pos_weight)
+    - Overfitting risk: use regularization and random feature/subsampling
+    - Speed: moderate num_leaves and max_depth for fast training
+
+    Returns a dict of LightGBM parameters.
+    """
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 31,
+        'learning_rate': 0.05, # Decrease learning rate to improve convergence
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.8, # Adjust bagging fraction for better exploration
+        'bagging_freq': 4, # Reduce frequency of bagging iterations
+        'max_depth': -1,  # allow unlimited depth for flexibility
+        'min_child_samples': 30, # Decrease to improve model granularity
+        'scale_pos_weight': 25, # Increase weight to better handle imbalance
+        'lambda_l1': 0.4,
+        'lambda_l2': 1.8,
+        'verbose': -1,
+    }
+# EVOLVE-BLOCK-END
+
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+>>>>>>> REPLACE
+
+</DIFF>

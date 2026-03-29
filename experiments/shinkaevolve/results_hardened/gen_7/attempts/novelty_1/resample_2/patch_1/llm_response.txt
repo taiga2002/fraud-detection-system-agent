@@ -1,0 +1,321 @@
+<name>
+feature_interaction_and_model_tuning_v2
+</name>
+
+<description>
+This updated version focuses on enhancing both feature engineering and model hyperparameters to improve fraud detection performance in Japanese banking transactions. The primary changes include:
+- Adding interaction features that capture temporal patterns, velocity burstiness, and suspicious device usage.
+- Tuning the LightGBM model for better regularization, diversity, and control over tree depth.
+- Adjusting fusion scoring to emphasize transfer risk while amplifying high-risk account signals.
+</description>
+
+<code>
+```python
+"""
+Evolvable ML Pipeline for Japanese Banking Fraud Detection
+
+This program is evolved by ShinkaEvolve. Code inside EVOLVE-BLOCK markers
+can be mutated by the LLM. Everything outside is fixed infrastructure.
+
+Outputs JSON metrics to stdout for the evaluator to parse.
+"""
+
+import sys
+import os
+import json
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score
+import lightgbm as lgb
+
+# ─── Fixed infrastructure: locate project root and load data ───
+def _find_project_root():
+    """Walk up from cwd and __file__ to find the project root with data/processed/."""
+    candidates = [
+        os.getcwd(),
+        os.path.dirname(os.path.abspath(__file__)),
+    ]
+    for start in candidates:
+        path = os.path.abspath(start)
+        for _ in range(10):
+            if os.path.isdir(os.path.join(path, 'data', 'processed')):
+                return path
+            parent = os.path.dirname(path)
+            if parent == path:
+                break
+            path = parent
+    raise FileNotFoundError("Cannot find project root with data/processed/ directory")
+
+PROJECT_ROOT = _find_project_root()
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'processed')
+
+
+def load_data(seed=42):
+    """Load, subsample, and harden transaction data for realistic evaluation.
+
+    Hardening steps (to make the task non-trivial):
+    1. Drop near-perfect proxy features (corr > 0.7 with target)
+    2. Add Gaussian noise to numeric features (30%)
+    3. Flip 5% of labels to simulate annotation noise
+    This brings baseline AUC from ~1.0 down to ~0.75-0.85, creating room
+    for evolved features to provide genuine improvement.
+    """
+    txn_path = os.path.join(DATA_DIR, 'transactions_with_features.csv')
+    acc_path = os.path.join(DATA_DIR, 'accounts_with_risk.csv')
+
+    txn_df = pd.read_csv(txn_path)
+    acc_df = pd.read_csv(acc_path)
+
+    # Subsample to 10K rows for speed (stratified by target)
+    if len(txn_df) > 10000:
+        txn_df, _ = train_test_split(
+            txn_df, train_size=10000, random_state=seed,
+            stratify=txn_df['is_laundering']
+        )
+        txn_df = txn_df.reset_index(drop=True)
+
+    rng = np.random.RandomState(seed)
+
+    # 1. Drop leaky features (correlation > 0.7 with is_laundering)
+    leaky_cols = ['sender_mean_amount', 'sender_txn_count', 'balance_drain_ratio',
+                  'sender_std_amount', 'sender_account_risk_score']
+    txn_df = txn_df.drop(columns=[c for c in leaky_cols if c in txn_df.columns])
+
+    # 2. Add 30% Gaussian noise to numeric columns
+    noise_cols = [c for c in txn_df.select_dtypes(include=[np.number]).columns
+                  if c != 'is_laundering']
+    for col in noise_cols:
+        std = txn_df[col].std()
+        if std > 0:
+            txn_df[col] = txn_df[col] + rng.normal(0, 0.3 * std, len(txn_df))
+
+    # 3. Flip 5% of labels (annotation noise)
+    flip_mask = rng.random(len(txn_df)) < 0.05
+    txn_df['is_laundering'] = txn_df['is_laundering'].astype(int)
+    txn_df.loc[flip_mask, 'is_laundering'] = 1 - txn_df.loc[flip_mask, 'is_laundering']
+
+    return txn_df, acc_df
+
+
+# ─── Available columns in txn_df after feature engineering ───
+# amount_jpy, amount_log, is_high_amount, is_very_high_amount,
+# balance_drain_ratio, first_transfer,
+# sender_account_age_days, sender_ib_enabled, sender_ib_days_since_enabled,
+# sender_suspicious_device, sender_account_risk_score,
+# receiver_account_age_days, receiver_is_new, receiver_is_very_new,
+# txn_count_24h, txn_volume_24h, has_recent_activity,
+# sender_mean_amount, sender_std_amount, sender_txn_count,
+# amount_zscore, amount_above_mean, amount_much_above_mean,
+# hour, day_of_week, is_weekend, is_business_hours, is_late_night
+
+
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    feats = pd.DataFrame(index=df.index)
+
+    # Log-transformed amount features for better distribution handling
+    feats['log_amount'] = np.log1p(df['amount_jpy'])
+
+    # Ratio of recent volume to age of sender account
+    feats['recent_txn_to_age_ratio'] = df['txn_volume_24h'].fillna(0) / (df['sender_account_age_days'] + 1)
+
+    # IB enablement ratio: how recently internet banking was enabled relative to account age
+    feats['ib_enable_time_since_creation'] = np.log((df['sender_ib_days_since_enabled'].fillna(9999) + 1))
+    
+    # Interaction term for late night and high transaction volume/amount
+    feats['late_night_txn_volume'] = df['is_late_night'].astype(int) * (np.log(df['txn_count_24h']) + 1)
+    feats['late_night_high_amount'] = df['is_late_night'].astype(int) * df['is_high_amount']
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+    
+    # Suspicious device interaction with IB enablement time
+    feats['suspicious_device_with_ib_enable'] = df['sender_suspicious_device'].fillna(0) * feats['ib_enable_time_since_creation']
+
+    # Weekend transfer risk amplified by high volume/amount
+    feats['weekend_transfer_volume_amount'] = (df['day_of_week'] >= 5).astype(int) * (np.log(df['txn_count_24h']) + np.log1p(df['amount_jpy']))
+
+    return feats
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def get_model_params():
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 48, # Increased leaves for more flexibility
+        'learning_rate': 0.1, # Higher learning rate for faster convergence
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.8,
+        'max_depth': -1, # Unlimited depth allows complex models
+        'min_child_samples': 20,
+        'scale_pos_weight': 30, # Higher weight on positive class due to imbalance
+        'lambda_l1': 1.5,
+        'lambda_l2': 1.5,
+        'verbose': -1,
+    }
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+    w_transfer = 0.90 # Higher weight on transfer risk model output
+    w_account = 0.10
+    
+    fused_scores = np.where(account_risk_scores > 0.3,
+                            np.clip(w_transfer * (transfer_risk_scores ** 2) + w_account * account_risk_scores, 0, 1),
+                            w_transfer * transfer_risk_scores + w_account * account_risk_scores)
+    
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    threshold = np.percentile(fused_scores, 94)
+
+    return fused_scores, threshold
+# EVOLVE-BLOCK-END
+
+
+# ─── Fixed infrastructure: training, evaluation, and output ───
+
+# Base features — leaky proxies removed (sender_mean_amount, sender_txn_count,
+# balance_drain_ratio, sender_std_amount, sender_account_risk_score)
+BASE_FEATURE_COLS = [
+    'amount_jpy', 'amount_log', 'is_high_amount', 'is_very_high_amount',
+    'first_transfer',
+    'sender_account_age_days', 'sender_ib_enabled', 'sender_ib_days_since_enabled',
+    'sender_suspicious_device',
+    'receiver_account_age_days', 'receiver_is_new', 'receiver_is_very_new',
+    'txn_count_24h', 'txn_volume_24h', 'has_recent_activity',
+    'amount_zscore', 'amount_above_mean', 'amount_much_above_mean',
+    'hour', 'day_of_week', 'is_weekend', 'is_business_hours', 'is_late_night',
+]
+
+
+def evaluate(seed=42):
+    """
+    Full pipeline: load data, engineer features, train model, evaluate.
+    Returns a dict of metrics.
+    """
+    txn_df, acc_df = load_data(seed=seed)
+
+    # Engineer evolved features
+    evolved_feats = engineer_evolved_features(txn_df)
+
+    # Combine base + evolved features
+    available_base = [c for c in BASE_FEATURE_COLS if c in txn_df.columns]
+    X_base = txn_df[available_base].fillna(0)
+    X = pd.concat([X_base, evolved_feats], axis=1)
+    y = txn_df['is_laundering'].astype(int)
+
+    # Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=seed, stratify=y
+    )
+
+    # Get model params from evolvable block
+    params = get_model_params()
+
+    # Train LightGBM
+    train_data = lgb.Dataset(X_train, label=y_train)
+    val_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
+
+    model = lgb.train(
+        params,
+        train_data,
+        num_boost_round=200,
+        valid_sets=[val_data],
+        valid_names=['val'],
+        # min 50 rounds to prevent trivial convergence on noisy data
+        callbacks=[lgb.early_stopping(stopping_rounds=20, min_delta=0.001), lgb.log_evaluation(0)],
+    )
+
+    # Predict
+    y_pred_proba = model.predict(X_test)
+
+    # Account risk scores (may be absent after leaky feature removal)
+    account_risk_col = 'sender_account_risk_score'
+    if account_risk_col in txn_df.columns:
+        account_risk_test = txn_df.loc[X_test.index, account_risk_col].fillna(0).values
+    else:
+        # Proxy: use IB-based risk estimate from available features
+        ib_col = 'sender_ib_days_since_enabled'
+        age_col = 'sender_account_age_days'
+        if ib_col in txn_df.columns and age_col in txn_df.columns:
+            ib_vals = txn_df.loc[X_test.index, ib_col].fillna(9999).values
+            age_vals = txn_df.loc[X_test.index, age_col].fillna(9999).values
+            account_risk_test = np.clip(1.0 - ib_vals / (age_vals + 1), 0, 1)
+        else:
+            account_risk_test = np.zeros(len(X_test))
+
+    # Compute fusion score
+    fused_scores, threshold = compute_fusion_score(y_pred_proba, account_risk_test)
+
+    # Compute metrics
+    y_pred_binary = (fused_scores >= threshold).astype(int)
+
+    roc_auc = float(roc_auc_score(y_test, fused_scores))
+    f1 = float(f1_score(y_test, y_pred_binary, zero_division=0))
+    precision = float(precision_score(y_test, y_pred_binary, zero_division=0))
+    recall = float(recall_score(y_test, y_pred_binary, zero_division=0))
+
+    # Prevention rate: fraction of actual fraud that is caught
+    n_fraud = int(y_test.sum())
+    n_fraud_caught = int((y_pred_binary & y_test).sum()) if n_fraud > 0 else 0
+    prevention_rate = n_fraud_caught / max(n_fraud, 1)
+
+    # Alert quality: penalize degenerate alert rates
+    alert_rate = float(y_pred_binary.mean())
+    if alert_rate < 0.01 or alert_rate > 0.5:
+        alert_quality = 0.0
+    else:
+        # Ideal alert rate 2-10%; penalize outside this range
+        if 0.02 <= alert_rate <= 0.10:
+            alert_quality = 1.0
+        elif alert_rate < 0.02:
+            alert_quality = alert_rate / 0.02
+        else:
+            alert_quality = max(0.0, 1.0 - (alert_rate - 0.10) / 0.40)
+
+    # Composite fitness score (F1-heavy: rewards precision-recall balance
+    # now that AUC has real headroom from feature removal + noise)
+    combined_score = (
+        0.30 * roc_auc +
+        0.40 * f1 +
+        0.20 * prevention_rate +
+        0.10 * alert_quality
+    )
+
+    metrics = {
+        'combined_score': combined_score,
+        'roc_auc': roc_auc,
+        'f1_score': f1,
+        'precision': precision,
+        'recall': recall,
+        'prevention_rate': prevention_rate,
+        'alert_rate': alert_rate,
+        'alert_quality': alert_quality,
+        'n_fraud_total': n_fraud,
+        'n_fraud_caught': n_fraud_caught,
+        'n_evolved_features': len(evolved_feats.columns),
+        'threshold': float(threshold),
+    }
+
+    return metrics
+
+
+if __name__ == '__main__':
+    seed = int(sys.argv[1]) if len(sys.argv) > 1 else 42
+    try:
+        result = evaluate(seed=seed)
+        print(json.dumps(result))
+    except Exception as e:
+        # Output zero metrics on failure
+        print(json.dumps({
+            'combined_score': 0.0,
+            'error': str(e),
+        }))
+        sys.exit(1)
+
+```
+</code>

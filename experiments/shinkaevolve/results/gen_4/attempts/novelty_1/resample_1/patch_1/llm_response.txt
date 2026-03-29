@@ -1,0 +1,125 @@
+<name>
+japanese_fraud_detection_v2
+
+</DESCRIPTION>
+The current approach uses a combination of feature engineering, model training, and fusion scoring to detect fraudulent transactions in Japanese banking data. The existing features include interactions between transaction amount, account age, IB enablement timing, and balance drain ratio. However, there is room for improvement by refining the interaction features, adjusting the hyperparameters for better regularization and speed, and optimizing the fusion score calculation.
+
+The proposed changes:
+1. **Feature Engineering** - Introduce a new feature that captures the rapid pass-through of funds by comparing recent transaction volume to sender's standard deviation.
+2. **Model Hyperparameters** - Adjust parameters like `num_leaves`, `max_depth`, and regularization terms (`lambda_l1` and `lambda_l2`) for better model performance.
+3. **Fusion Scoring** - Modify the fusion score calculation to balance between predictive power of transfer risk and account risk while maintaining a reasonable alert rate.
+
+</CODE>
+```python
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    """
+    Create interaction features from the base transaction columns.
+    
+    Available numeric columns:
+      amount_jpy, amount_log, balance_drain_ratio,
+      sender_account_age_days, sender_ib_days_since_enabled,
+      sender_account_risk_score, receiver_account_age_days,
+      txn_count_24h, txn_volume_24h, sender_mean_amount,
+      sender_std_amount, sender_txn_count, amount_zscore, hour
+    
+    Available binary columns:
+      is_high_amount, is_very_high_amount, first_transfer,
+      sender_ib_enabled, sender_suspicious_device,
+      receiver_is_new, receiver_is_very_new, has_recent_activity,
+      amount_above_mean, amount_much_above_mean,
+      is_weekend, is_business_hours, is_late_night
+    
+    Returns a DataFrame with new feature columns only.
+    """
+    feats = pd.DataFrame(index=df.index)
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+    
+    # Amount relative to standard deviation of recent transactions
+    feats['amount_to_std_ratio'] = df['amount_jpy'] / (df['sender_std_amount'] + 1)
+
+    # New account + high amount interaction
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+    
+    # Late night + high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+    
+    # Rapid pass-through indicator: ratio of recent volume to sender's standard deviation
+    feats['rapid_pass_through'] = df['txn_volume_24h'].fillna(0) / (df['sender_std_amount'] + 1)
+
+    return feats
+
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def get_model_params():
+    """
+    Return LightGBM parameters for the fraud detection model.
+    
+    Key considerations:
+    - Class imbalance: ~5% fraud vs 95% normal (use scale_pos_weight)
+    - Overfitting risk: use regularization (min_child_samples, feature_fraction)
+    - Speed: moderate num_leaves and max_depth for fast training
+    
+    Returns a dict of LightGBM parameters.
+    """
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 25,
+        'learning_rate': 0.1,
+        'feature_fraction': 0.7,
+        'bagging_fraction': 0.8,
+        'bagging_freq': 3,
+        'max_depth': -1, # No limit on max depth
+        'min_child_samples': 25,
+        'scale_pos_weight': 20,
+        'lambda_l1': 0.2,
+        'lambda_l2': 1.5,
+        'verbose': -1,
+    }
+
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+    """
+    Combine transfer risk and account risk into a final suspicious-transfer score.
+    
+    Args:
+        transfer_risk_scores: numpy array of P(fraud) from the LightGBM model
+        account_risk_scores: numpy array of sender_account_risk_score
+    
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    # Weighted fusion: transfer risk dominates, account risk amplifies
+    w_transfer = 0.85
+    w_account = 0.15
+
+    fused = w_transfer * transfer_risk_scores + w_account * account_risk_scores
+    
+    # Boost score when rapid pass-through indicator is high (new feature)
+    rapid_pass_through_high = df['rapid_pass_through'].values > 3
+    if 'rapid_pass_through' in evolved_feats.columns:
+        rapid_pass_through_high = evolved_feats['rapid_pass_through'].values > 3
+
+    fused = np.where(rapid_pass_through_high, np.clip(fused * 1.25, 0, 1), fused)
+    
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused, 95))
+    
+    return fused, threshold
+
+# EVOLVE-BLOCK-END
+```

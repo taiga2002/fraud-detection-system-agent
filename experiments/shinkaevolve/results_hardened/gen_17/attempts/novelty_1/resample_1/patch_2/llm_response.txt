@@ -1,0 +1,12 @@
+<NAME>
+Introduce an interaction term between suspicious device activity and IB enablement age ratio to capture complex behavior patterns indicative of fraud.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['susp_device_ib_enable'] = np.log(df['sender_suspicious_device'].fillna(1)) * feats['ib_age_ratio']
+=======
+feats['susp_device_ib_enable_interaction'] = df['sender_suspicious_device'].fillna(0) * (feats['ib_age_ratio'])**2
+>>>>>>> REPLACE
+
+</DIFF>

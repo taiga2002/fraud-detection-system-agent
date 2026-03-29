@@ -1,0 +1,236 @@
+<anomaly_detection_with_isolation_forest>
+An approach using Isolation Forest for anomaly detection, which is well-suited for identifying rare events like fraud in transaction data without needing labeled data.
+</DESCRIPTION>
+
+<CODE>
+```python
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score
+
+# ─── Fixed infrastructure: locate project root and load data ───
+def _find_project_root():
+    """Walk up from cwd and __file__ to find the project root with data/processed/."""
+    candidates = [
+        os.getcwd(),
+        os.path.dirname(os.path.abspath(__file__)),
+    ]
+    for start in candidates:
+        path = os.path.abspath(start)
+        for _ in range(10):
+            if os.path.isdir(os.path.join(path, 'data', 'processed')):
+                return path
+            parent = os.path.dirname(path)
+            if parent == path:
+                break
+            path = parent
+    raise FileNotFoundError("Cannot find project root with data/processed/ directory")
+
+PROJECT_ROOT = _find_project_root()
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'processed')
+
+
+def load_data(seed=42):
+    """Load and subsample transaction data for fast evaluation."""
+    txn_path = os.path.join(DATA_DIR, 'transactions_with_features.csv')
+    acc_path = os.path.join(DATA_DIR, 'accounts_with_risk.csv')
+
+    txn_df = pd.read_csv(txn_path)
+    acc_df = pd.read_csv(acc_path)
+
+    # Subsample to 10K rows for speed (stratified by target)
+    if len(txn_df) > 10000:
+        txn_df, _ = train_test_split(
+            txn_df, train_size=10000, random_state=seed,
+            stratify=txn_df['is_laundering']
+        )
+        txn_df = txn_df.reset_index(drop=True)
+
+    return txn_df, acc_df
+
+
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    """
+    Create interaction features from the base transaction columns.
+
+    Available numeric columns:
+      amount_jpy, amount_log, balance_drain_ratio,
+      sender_account_age_days, sender_ib_days_since_enabled,
+      sender_account_risk_score, receiver_account_age_days,
+      txn_count_24h, txn_volume_24h, sender_mean_amount,
+      sender_std_amount, sender_txn_count, amount_zscore, hour
+
+    Available binary columns:
+      is_high_amount, is_very_high_amount, first_transfer,
+      sender_ib_enabled, sender_suspicious_device,
+      receiver_is_new, receiver_is_very_new, has_recent_activity,
+      amount_above_mean, amount_much_above_mean,
+      is_weekend, is_business_hours, is_late_night
+
+    Returns a DataFrame with new feature columns only.
+    """
+    feats = pd.DataFrame(index=df.index)
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+    
+    return feats
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def get_model_params():
+    """
+    Return the isolation forest parameters.
+
+    Returns a dict of Isolation Forest params.
+    """
+    return {
+        'n_estimators': 100,
+        'max_samples': 256,
+        'contamination': 0.05,  # Estimate contamination based on fraud rate
+        'random_state': 42,
+    }
+# EVOLVE-BLOCK-END
+
+
+# EVOLVE-BLOCK-START
+def compute_fusion_score(isolation_forest_scores, account_risk_scores):
+    """
+    Combine isolation forest risk and account risk into a final suspicious-transfer score.
+
+    Args:
+        isolation_forest_scores: numpy array of anomaly scores from the Isolation Forest model
+        account_risk_scores: numpy array of sender_account_risk_score
+
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    # Weighted fusion: isolation forest risk dominates, account risk amplifies
+    w_forest = 0.80
+    w_account = 0.20
+
+    fused_scores = w_forest * np.clip(isolation_forest_scores, -1, 1) + w_account * account_risk_scores
+
+    # Boost fused score when account risk is elevated
+    high_account_risk = account_risk_scores > 0.3
+    fused_scores = np.where(high_account_risk, np.clip(fused_scores * 1.2, 0, 1), fused_scores)
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused_scores, 92))
+
+    return fused_scores, threshold
+# EVOLVE-BLOCK-END
+
+
+def evaluate(seed=42):
+    """
+    Full pipeline: load data, engineer features, train model, evaluate.
+    Returns a dict of metrics.
+    """
+    txn_df, acc_df = load_data(seed=seed)
+
+    # Engineer evolved features
+    evolved_feats = engineer_evolved_features(txn_df)
+
+    # Combine base + evolved features
+    available_base = [
+        'amount_jpy', 'balance_drain_ratio',
+        'sender_account_age_days', 'receiver_is_new', 
+        'txn_count_24h', 'is_late_night'
+    ]
+    X_base = txn_df[available_base].fillna(0)
+    X = pd.concat([X_base, evolved_feats], axis=1)
+
+    # Isolation Forest model parameters
+    params = get_model_params()
+
+    # Train Isolation Forest
+    clf = IsolationForest(**params).fit(X.values)
+
+    # Compute anomaly scores
+    isolation_forest_scores = -clf.decision_function(X.values)  # Convert to positive score
+
+    # Get account risk scores for fusion
+    account_risk_col = 'sender_account_risk_score'
+    if account_risk_col in txn_df.columns:
+        account_risk_test = txn_df[account_risk_col].fillna(0).values
+    else:
+        account_risk_test = np.zeros(len(X))
+
+    # Compute fusion score
+    fused_scores, threshold = compute_fusion_score(isolation_forest_scores, account_risk_test)
+
+    # Evaluate using ground truth labels (if available)
+    y = txn_df['is_laundering'].astype(int) if 'is_laundering' in txn_df.columns else None
+
+    # Compute metrics
+    y_pred_binary = (fused_scores >= threshold).astype(int)
+
+    roc_auc = float(roc_auc_score(y, fused_scores)) if y is not None else 0.0
+    f1 = float(f1_score(y, y_pred_binary, zero_division=0)) if y is not None else 0.0
+    precision = float(precision_score(y, y_pred_binary, zero_division=0)) if y is not None else 0.0
+    recall = float(recall_score(y, y_pred_binary, zero_division=0)) if y is not None else 0.0
+
+    # Prevention rate: fraction of actual fraud that is caught
+    n_fraud = int(y.sum()) if y is not None else 0
+    n_fraud_caught = int((y_pred_binary & y).sum()) if y is not None and n_fraud > 0 else 0
+    prevention_rate = n_fraud_caught / max(n_fraud, 1)
+
+    # Alert quality: penalize degenerate alert rates
+    alert_rate = float(y_pred_binary.mean())
+    if alert_rate < 0.01 or alert_rate > 0.5:
+        alert_quality = 0.0
+    else:
+        # Ideal alert rate 2-10%; penalize outside this range
+        if 0.02 <= alert_rate <= 0.10:
+            alert_quality = 1.0
+        elif alert_rate < 0.02:
+            alert_quality = alert_rate / 0.02
+        else:
+            alert_quality = max(0.0, 1.0 - (alert_rate - 0.10) / 0.40)
+
+    # Composite fitness score
+    combined_score = (
+        0.40 * roc_auc +
+        0.30 * f1 +
+        0.20 * prevention_rate +
+        0.10 * alert_quality
+    )
+
+    metrics = {
+        'combined_score': combined_score,
+        'roc_auc': roc_auc,
+        'f1_score': f1,
+        'precision': precision,
+        'recall': recall,
+        'prevention_rate': prevention_rate,
+        'alert_rate': alert_rate,
+        'alert_quality': alert_quality,
+        'n_fraud_total': n_fraud,
+        'n_fraud_caught': n_fraud_caught,
+        'n_evolved_features': len(evolved_feats.columns),
+        'threshold': float(threshold),
+    }
+
+    return metrics
+
+
+if __name__ == '__main__':
+    seed = int(sys.argv[1]) if len(sys.argv) > 1 else 42
+    try:
+        result = evaluate(seed=seed)
+        print(json.dumps(result))
+    except Exception as e:
+        # Output zero metrics on failure
+        print(json.dumps({
+            'combined_score': 0.0,
+            'error': str(e),
+        }))
+        sys.exit(1)
+```
+</CODE>

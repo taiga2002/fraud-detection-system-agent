@@ -1,0 +1,119 @@
+<NAME>
+Add interaction features related to receiver account age and amount in transaction, as well as other meaningful interactions
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+
+    # High amount transfer with recent IB enablement interaction
+    feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)
+
+    # Velocity score: rapid transfers in the past 24 hours
+    feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)
+=======
+    # Interaction between recent IB enablement and account age
+    feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+
+    # Relative amount to mean transaction in recent window
+    feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = (df['txn_volume_24h'] / (df['txn_count_24h'] + 1)).clip(lower=0.0, upper=None)
+
+    # Interaction between new account and high amount
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Balance drain with first transfer interaction
+    feats['drain_first_transfer_interaction'] = (df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)).clip(lower=0.0, upper=None)
+
+    # Interaction between high velocity and suspicious device
+    feats['high_velocity_suspicious_device'] = (
+        ((df['txn_count_24h'].fillna(0) > 3) & (df['sender_suspicious_device'].fillna(0))).astype(int))
+
+    # Late night transfers with high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Receiver account age interaction with new and high-risk receiver accounts
+    feats['receiver_age_new_acct'] = (df['receiver_account_age_days'] < 90).astype(int)
+
+    return feats
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Adjust model parameters to better optimize for class imbalance and regularization.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+        'n_estimators': 100,
+            'max_depth': 8,
+
+            'min_child_samples': 50,
+
+            'learning_rate': 0.02,
+
+            'lambda_l1': 1.0,
+
+            'max_samples': 256,
+        'random_state': 42,
+    }
+
+=======
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        'num_leaves': 31, # Lower leaves for better generalization
+        'learning_rate': 0.075,
+        'feature_fraction': 0.6, # More feature subsampling to prevent overfitting
+        'bagging_fraction': 0.7,
+        'min_child_samples': 30,
+        'scale_pos_weight': 20,
+        'lambda_l1': 0.5,
+        'lambda_l2': 1.0,
+    }
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Improve fusion logic by adjusting the non-linear transformation of account risk and adding an adaptive threshold
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+    w_forest = 0.80
+    w_account = 0.20
+
+    fused_scores = w_forest * np.clip(isolation_forest_scores, -1, 1) + w_account * account_risk_scores
+
+    # Boost fused score when account risk is elevated
+    high_account_risk = account_risk_scores > 0.3
+    fused_scores = np.where(high_account_risk, np.clip(fused_scores * 1.2, 0, 1), fused_scores)
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused_scores, 92))
+
+    return fused_scores, threshold
+
+=======
+        w_transfer = 0.75
+        w_account = np.power(account_risk_scores + 0.1, 2) * 0.25
+
+        # Sigmoid fusion to smooth the score distribution
+        sigmoid_transfer = 1 / (1 + np.exp(-(transfer_risk_scores - 0.4)))
+
+        fused = w_transfer * sigmoid_transfer + w_account
+
+        # Adaptive threshold: use percentile-based to handle varying score ranges
+        # Target ~5-8% alert rate (matching approximate fraud rate)
+        threshold = float(np.percentile(fused, 92))
+
+        return fused, threshold
+>>>>>>> REPLACE
+
+</DIFF>

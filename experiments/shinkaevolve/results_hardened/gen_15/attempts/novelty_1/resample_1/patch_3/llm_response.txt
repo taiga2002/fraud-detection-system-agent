@@ -1,0 +1,13 @@
+<DIFF>
+<<<<<<< SEARCH
+w_account = 0.20
+fused = w_transfer * transfer_risk_scores + w_account * account_risk_scores
+=======
+# Higher weight on account risk for elevated scores
+w_account = 0.30
+
+high_account_risk_scale = np.where(account_risk_scores > 0.3, 1.2, 1)
+fused = w_transfer * transfer_risk_scores + high_account_risk_scale * w_account * account_risk_scores 
+>>>>>>> REPLACE
+
+</DIFF>

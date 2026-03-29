@@ -1,0 +1,3 @@
+Evaluation error: '{' was never closed (main.py, line 137)
+Correctness and error status saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results/gen_11/results/correct.json
+Metrics saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results/gen_11/results/metrics.json

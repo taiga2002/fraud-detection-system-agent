@@ -1,0 +1,17 @@
+==========Running program evaluation 1/3...==========
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[11]	val's auc: 0.751633
+==========Run 1/3 completed in 0.34 seconds==========
+==========Running program evaluation 2/3...==========
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[1]	val's auc: 0.732689
+==========Run 2/3 completed in 0.26 seconds==========
+==========Running program evaluation 3/3...==========
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[5]	val's auc: 0.746641
+==========Run 3/3 completed in 0.29 seconds==========
+Correctness and error status saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results_hardened/gen_16/results/correct.json
+Metrics saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results_hardened/gen_16/results/metrics.json

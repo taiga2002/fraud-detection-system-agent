@@ -1,0 +1,78 @@
+<NAME>
+Add interaction features focusing on temporal patterns and device suspicion, as these are key indicators for fraud in Japanese banking environments.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Interaction term for new account + high amount pattern
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Late night + high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# Interaction term for new account + high amount pattern
+feats['new_acct_high_amount'] = df['receiver_is_new'].astype(int) * df['is_high_amount'].astype(int)
+
+# Late night + high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].astype(int) * df['is_high_amount'].astype(int)
+    
+# Weekend transfer interaction with high transaction volume/amount
+feats['weekend_transfer_volume_amount'] = (df['day_of_week'] >= 5).astype(int) * (np.log(df['txn_count_24h']) + np.log1p(df['amount_jpy']))
+
+# Suspicious device and IB enablement time interaction
+feats['suspicious_device_with_ib_enable'] = df['sender_suspicious_device'].fillna(0) * (np.log((df['sender_ib_days_since_enabled'].fillna(9999) + 1)))
+
+# Additional interaction for late night with high transaction volume/amount
+feats['late_night_txn_volume'] = df['is_late_night'].astype(int) * np.log(df['txn_count_24h'])
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DESCRIPTION>
+Adjust the model hyperparameters to better balance regularization and complexity, leading to improved performance on noisy data.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+    'num_leaves': 31,
+    'learning_rate': 0.05,
+    'feature_fraction': 0.85,
+    'bagging_fraction': 0.85,
+    'bagging_freq': 5,
+    'max_depth': 6,
+    'min_child_samples': 40,
+    'scale_pos_weight': 15,
+    'lambda_l1': 0.1,
+    'lambda_l2': 1.0,
+=======
+    'num_leaves': 48, # Increased leaves for more flexibility
+    'learning_rate': 0.1, # Higher learning rate for faster convergence
+    'feature_fraction': 0.75,
+    'bagging_fraction': 0.8,
+    'max_depth': -1, # Unlimited depth allows complex models
+    'min_child_samples': 20,
+    'scale_pos_weight': 30, # Higher weight on positive class due to imbalance
+    'lambda_l1': 1.5,
+    'lambda_l2': 1.5,
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DESCRIPTION>
+Improve the fusion score logic by applying non-linear transformations and adaptive thresholding based on percentile scores.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Adaptive threshold: use percentile-based to handle varying score ranges
+threshold = float(np.percentile(fused, 92))
+=======
+# Boost fused score when account risk is elevated
+high_account_risk = account_risk_scores > 0.3
+fused = np.where(high_account_risk, np.clip(fused * 1.2, 0, 1), fused)
+
+# Adaptive threshold: use percentile-based to handle varying score ranges
+threshold = float(np.percentile(fused, 94))
+>>>>>>> REPLACE
+
+</DIFF>

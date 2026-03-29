@@ -1,0 +1,14 @@
+{
+  "generation": 11,
+  "novelty_attempt": 1,
+  "resample_attempt": 1,
+  "patch_attempt": 1,
+  "success": false,
+  "num_applied": 0,
+  "patch_name": "none",
+  "patch_description": "none",
+  "error_msg": "SEARCH text not found in editable regions\n\nLooking for 26-line block starting with: '# Feature engineering block'\n\nFull search pattern:\n```\n# Feature engineering block\ndef engineer_evolved_features(df):\n    feats = pd.DataFrame(index=df.index)\n\n    # Log-transformed amount features\n    feats['log_amount'] = np.log1p(df['amount_jpy'])\n\n    # IB enablement ratio: how recently IB was enabled relative to account age\n    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)\n\n    # Velocity intensity: volume per transaction in recent window\n    feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)\n\n    # New account + high amount interaction\n    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)\n\n    # Late night + high amount risk\n    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)\n\n    # Weekend transfer risk\n    feats['weekend_transfer'] = df['receiver_is_new'].fillna(0) * (df['day_of_week'] >= 5).astype(int)\n\n    # High velocity + suspicious device\n    feats['velocity_suspicious'] = (np.log1p(df['txn_count_24h']) + 1) * df['sender_suspicious_device'].fillna(0)\n\n    return feats\n```\n\nFound similar code block at line 102 (\u2717 immutable):\n\nDifferences between search pattern and actual code:\n```diff\n-  # Feature engineering block\n+  # EVOLVE-BLOCK-START\n```\n\n\u26a0\ufe0f  Note: The similar code is in an immutable region.\n   Look for similar code in the editable regions below.\n\nEditable regions where you can make changes:\n  Region 1 (lines 102-128):\n    def engineer_evolved_features(df):\n        feats = pd.DataFrame(index=df.index)\n    \n    ... (19 more lines)\n        feats['velocity_suspicious'] = (np.log1p(df['txn_count_24h']) + 1) * df['sender_suspicious_device'].fillna(0)\n    \n        return feats\n\n  Region 2 (lines 131-148):\n    def get_model_params():\n        return {\n            'objective': 'binary',\n    ... (10 more lines)\n            'lambda_l2': 1.5,\n            'verbose': -1,\n        }\n\n  ... and 1 more regions\n\nQuick fixes:\n\u2022 Verify the text exists in the file\n\u2022 Check that you're searching within EVOLVE-BLOCK regions\n\u2022 Try a smaller, more specific search pattern",
+  "timestamp": "2026-03-21T01:13:01.345343",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

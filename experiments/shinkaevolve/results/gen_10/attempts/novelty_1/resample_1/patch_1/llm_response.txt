@@ -1,0 +1,206 @@
+<NAME>
+Add interaction features that capture the riskiness of recent transfers and new accounts.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    """
+    Create interaction features from the base transaction columns.
+
+    Available numeric columns:
+      amount_jpy, amount_log, balance_drain_ratio,
+      sender_account_age_days, sender_ib_days_since_enabled,
+      sender_account_risk_score, receiver_account_age_days,
+      txn_count_24h, txn_volume_24h, sender_mean_amount,
+      sender_std_amount, sender_txn_count, amount_zscore, hour
+
+    Available binary columns:
+      is_high_amount, is_very_high_amount, first_transfer,
+      sender_ib_enabled, sender_suspicious_device,
+      receiver_is_new, receiver_is_very_new, has_recent_activity,
+      amount_above_mean, amount_much_above_mean,
+      is_weekend, is_business_hours, is_late_night
+
+    Returns a DataFrame with new feature columns only.
+    """
+    feats = pd.DataFrame(index=df.index)
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+
+    # High amount transfer with recent IB enablement interaction
+    feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)
+
+    # Velocity score: rapid transfers in the past 24 hours
+    feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)
+    
+    return feats
+# EVOLVE-BLOCK-END
+=======
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    """
+    Create interaction features from the base transaction columns.
+
+    Available numeric columns:
+      amount_jpy, amount_log, balance_drain_ratio,
+      sender_account_age_days, sender_ib_days_since_enabled,
+      sender_account_risk_score, receiver_account_age_days,
+      txn_count_24h, txn_volume_24h, sender_mean_amount,
+      sender_std_amount, sender_txn_count, amount_zscore, hour
+
+    Available binary columns:
+      is_high_amount, is_very_high_amount, first_transfer,
+      sender_ib_enabled, sender_suspicious_device,
+      receiver_is_new, receiver_is_very_new, has_recent_activity,
+      amount_above_mean, amount_much_above_mean,
+      is_weekend, is_business_hours, is_late_night
+
+    Returns a DataFrame with new feature columns only.
+    """
+    feats = pd.DataFrame(index=df.index)
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+    
+    # High amount transfer with recent IB enablement interaction
+    feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)
+
+    # Velocity score: rapid transfers in the past 24 hours
+    feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)
+    
+    # Recent activity with new account interaction
+    feats['recent_activity_new_acct'] = df['has_recent_activity'].fillna(0) * df['receiver_is_new'].fillna(0)
+
+    # High amount transfer and new receiver interaction
+    feats['high_amount_new_receiver'] = df['is_high_amount'].fillna(0) * df['receiver_is_new'].fillna(0)
+    
+    return feats
+# EVOLVE-BLOCK-END
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Adjust the model's learning rate to optimize for faster convergence.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# EVOLVE-BLOCK-START
+def get_model_params():
+    """
+    Return the isolation forest parameters.
+
+    Returns a dict of Isolation Forest params.
+    """
+    return {
+        'n_estimators': 100,
+            'max_depth': 8,
+
+            'min_child_samples': 50,
+
+            'learning_rate': 0.02,
+
+            'lambda_l1': 1.0,
+
+            'max_samples': 256,
+        'random_state': 42,
+    }
+# EVOLVE-BLOCK-END
+=======
+# EVOLVE-BLOCK-START
+def get_model_params():
+    """
+    Return the isolation forest parameters.
+
+    Returns a dict of Isolation Forest params.
+    """
+    return {
+        'n_estimators': 100,
+            'max_depth': 8,
+
+            'min_child_samples': 50,
+
+            'learning_rate': 0.03, # Increased learning rate for faster convergence
+
+            'lambda_l1': 1.0,
+
+            'max_samples': 256,
+        'random_state': 42,
+    }
+# EVOLVE-BLOCK-END
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Adjust the fusion score computation to better handle account risk amplification.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# EVOLVE-BLOCK-START
+def compute_fusion_score(isolation_forest_scores, account_risk_scores):
+    """
+    Combine isolation forest risk and account risk into a final suspicious-transfer score.
+
+    Args:
+        isolation_forest_scores: numpy array of anomaly scores from the Isolation Forest model
+        account_risk_scores: numpy array of sender_account_risk_score
+
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    # Weighted fusion: isolation forest risk dominates, account risk amplifies
+    w_forest = 0.80
+    w_account = 0.20
+
+    fused_scores = w_forest * np.clip(isolation_forest_scores, -1, 1) + w_account * account_risk_scores
+
+    # Boost fused score when account risk is elevated
+    high_account_risk = account_risk_scores > 0.3
+    fused_scores = np.where(high_account_risk, np.clip(fused_scores * 1.2, 0, 1), fused_scores)
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused_scores, 92))
+
+    return fused_scores, threshold
+# EVOLVE-BLOCK-END
+=======
+# EVOLVE-BLOCK-START
+def compute_fusion_score(isolation_forest_scores, account_risk_scores):
+    """
+    Combine isolation forest risk and account risk into a final suspicious-transfer score.
+
+    Args:
+        isolation_forest_scores: numpy array of anomaly scores from the Isolation Forest model
+        account_risk_scores: numpy array of sender_account_risk_score
+
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    # Weighted fusion: isolation forest risk dominates, account risk amplifies
+    w_forest = 0.80
+    w_account = 0.20
+
+    fused_scores = w_forest * np.clip(isolation_forest_scores, -1, 1) + w_account * account_risk_scores
+
+    # Boost fused score when account risk is elevated
+    high_account_risk = account_risk_scores > 0.3
+    fused_scores = np.where(high_account_risk, np.clip(fused_scores * 1.25, 0, 1), fused_scores)
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused_scores, 93)) # Increased threshold for better calibration
+
+    return fused_scores, threshold
+# EVOLVE-BLOCK-END
+>>>>>>> REPLACE
+
+</DIFF>

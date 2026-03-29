@@ -1,0 +1,106 @@
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    """
+    Create interaction features from the base transaction columns.
+
+    Available numeric columns:
+      amount_jpy, amount_log, balance_drain_ratio,
+      sender_account_age_days, sender_ib_days_since_enabled,
+      sender_account_risk_score, receiver_account_age_days,
+      txn_count_24h, txn_volume_24h, sender_mean_amount,
+      sender_std_amount, sender_txn_count, amount_zscore, hour
+
+    Available binary columns:
+      is_high_amount, is_very_high_amount, first_transfer,
+      sender_ib_enabled, sender_suspicious_device,
+      receiver_is_new, receiver_is_very_new, has_recent_activity,
+      amount_above_mean, amount_much_above_mean,
+      is_weekend, is_business_hours, is_late_night
+
+    Returns a DataFrame with new feature columns only.
+    """
+    feats = pd.DataFrame(index=df.index)
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+    
+    # High amount transfer with recent IB enablement interaction
+    feats['high_amount_recent_IB'] = df['is_high_amount'].fillna(0) * df['sender_ib_enabled'].fillna(0)
+
+    # Velocity score: rapid transfers in the past 24 hours
+    feats['velocity_score'] = (df['txn_count_24h'].fillna(0)) / (df['amount_jpy']).clip(lower=1)
+    
+    # Balance drain with first transfer interaction
+    feats['drain_first_transfer_interaction'] = df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)
+
+    # Interaction between new account and high amount
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+    
+    # High velocity with suspicious device interaction
+    feats['high_velocity_suspicious_device'] = (df['txn_count_24h']).clip(lower=1) * (df['sender_suspicious_device'])
+    
+    return feats
+# EVOLVE-BLOCK-END
+
+# EVOLVE-BLOCK-START
+def get_model_params():
+    """
+    Return LightGBM parameters for the fraud detection model.
+
+    Key considerations:
+    - Class imbalance: ~5% fraud vs 95% normal (use scale_pos_weight)
+    - Overfitting risk: use regularization and random feature/subsampling
+    - Speed: moderate num_leaves and max_depth for fast training
+
+    Returns a dict of LightGBM parameters.
+    """
+    return {
+        'objective': 'binary',
+        'metric': 'auc',
+        'boosting_type': 'gbdt',
+        # Reduced complexity to improve regularization and training speed
+        'num_leaves': 30,
+        # Smaller learning rate for better convergence with more regularized model
+        'learning_rate': 0.05,
+        'feature_fraction': 0.75, 
+        'bagging_fraction': 0.8,
+        'bagging_freq': 5,
+        'max_depth': -1,    # allow unlimited depth for flexibility
+        'min_child_samples': 30,
+        'scale_pos_weight': 20,   # higher weight to handle class imbalance
+        'lambda_l1': 0.4,
+        'lambda_l2': 0.5,
+    }
+# EVOLVE-BLOCK-END
+
+# EVOLVE-BLOCK-START
+def compute_fusion_score(lightgbm_scores, account_risk_scores):
+    """
+    Combine LightGBM risk and account risk into a final suspicious-transfer score.
+
+    Args:
+        lightgbm_scores: numpy array of P(fraud) from the LightGBM model
+        account_risk_scores: numpy array of sender_account_risk_score
+
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    # Weighted fusion: lightgbm risk dominates, account risk amplifies non-linearly
+    w_model = 0.85
+    w_account = np.power(account_risk_scores + 0.1, 2) * 0.15
+
+    fused_scores = w_model * lightgbm_scores + w_account
+
+    # Boost score when account risk is high and transaction time is unusual (late night/weekend)
+    late_night = df['is_late_night'].fillna(0).values
+    weekend = df['is_weekend'].fillna(0).values
+    boost_mask = (account_risk_scores > 0.3) * (late_night + weekend >= 1)
+    boosted_scores = np.where(boost_mask, fused_scores * 1.2, fused_scores)
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused_scores, 92))
+
+    return boosted_scores, threshold
+# EVOLVE-BLOCK-END

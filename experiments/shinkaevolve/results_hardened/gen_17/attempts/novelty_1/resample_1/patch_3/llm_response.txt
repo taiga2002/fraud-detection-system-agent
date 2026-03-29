@@ -1,0 +1,52 @@
+<NAME>
+Introduce an interaction term between suspicious device activity and IB enablement age ratio to capture complex behavior patterns indicative of fraud.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['susp_device_ib_enable'] = np.log(df['sender_suspicious_device'].fillna(1)) * feats['ib_age_ratio']
+=======
+feats['susp_device_interaction'] = df['sender_suspicious_device'].fillna(0) * (feats['ib_age_ratio'])**2
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Adjust model regularization to balance complexity and overfitting.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+    'lambda_l1': 2.0,
+    'lambda_l2': 2.0,
+=======
+    'lambda_l1': 3.0,
+    'lambda_l2': 1.5,
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Improve fusion score calculation by applying a non-linear weighting to account risk scores.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+                                np.clip(w_transfer * transfer_risk_scores + w_account * (account_risk_scores ** 2), 0, 1),
+                            w_transfer * transfer_risk_scores + w_account * account_risk_scores)
+    
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    threshold = np.percentile(fused_scores, 95) if np.any(account_risk_scores > 0.3) else np.percentile(fused_scores, 92)
+
+    return fused_scores, threshold
+=======
+                                w_transfer * (transfer_risk_scores ** 1.3) + w_account * ((account_risk_scores - 0.3)**2), 0, 1),
+                            w_transfer * transfer_risk_scores + w_account * account_risk_scores)
+    
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    threshold = np.percentile(fused_scores[fused_scores > 0.4], 95) if np.any(account_risk_scores[fused_scores > 0.4] > 0.3) else np.percentile(fused_scores, 92)
+
+    return fused_scores, threshold
+>>>>>>> REPLACE
+
+</DIFF>

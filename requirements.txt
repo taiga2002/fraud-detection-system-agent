@@ -1,0 +1,27 @@
+# Core Data Science Libraries
+pandas==3.0.1
+numpy==2.4.3
+
+# Machine Learning
+scikit-learn==1.8.0
+lightgbm==4.6.0
+
+# Graph Analytics
+networkx==3.6.1
+
+# Visualization
+matplotlib==3.10.8
+seaborn==0.13.2
+
+# Configuration
+pyyaml==6.0.3
+
+# ShinkaEvolve (LLM-guided program evolution)
+shinka-evolve==0.0.1
+
+# Hyperparameter Optimization
+optuna==4.8.0
+
+# Additional Dependencies
+scipy==1.17.1
+joblib==1.5.3

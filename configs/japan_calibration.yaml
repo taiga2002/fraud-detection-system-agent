@@ -1,0 +1,51 @@
+# Japan Online-Banking Scam Detection - Runtime Configuration
+# Only contains values read by application code at runtime.
+# For domain context (statistics, attack patterns, regulatory background),
+# see docs/japan_context.md
+
+# Detection Thresholds
+detection_thresholds:
+
+  # Account Opening Risk
+  account_opening:
+    high_risk_score: 0.7
+    medium_risk_score: 0.4
+
+  # Transaction Risk
+  transaction:
+    new_beneficiary_high_amount_jpy: 1000000  # ¥1M
+    balance_drain_ratio_threshold: 0.5        # 50% of balance
+    first_transfer_amount_multiplier: 3.0     # 3x normal for account
+
+  # Graph/Network Risk
+  network:
+    mule_in_degree_threshold: 5    # >5 incoming transfers in 24h
+    mule_out_degree_threshold: 3   # >3 outgoing transfers in 24h
+    rapid_passthrough_hours: 6     # Funds in and out within 6 hours
+    min_mule_cluster_size: 3       # At least 3 connected suspicious accounts
+
+# Reason Codes (Interpretable Alerts)
+# Prefix encodes the category: AR=Account Risk, TR=Transaction Risk,
+# NR=Network Risk, CM=Combined
+reason_codes:
+  AR01: "New account (<30 days)"
+  AR02: "Internet banking recently enabled (<14 days)"
+  AR03: "Suspicious device/IP at onboarding"
+  AR04: "High account opening risk score (>0.7)"
+  AR05: "Minimal transaction history"
+  TR01: "First-time transfer to new beneficiary"
+  TR02: "Amount significantly exceeds account norm (>3x)"
+  TR03: "Balance drain ratio >50%"
+  TR04: "Transfer amount >¥1M to new beneficiary"
+  TR05: "Login from new device/location"
+  TR06: "Device mismatch with customer profile"
+  TR07: "Rapid sequence of transfers within 24h"
+  NR01: "Receiving account shows mule-like fan-out pattern"
+  NR02: "Receiving account in known mule cluster"
+  NR03: "Device fingerprint matches frozen account"
+  NR04: "Rapid pass-through behavior (<6h)"
+  NR05: "High in-degree/out-degree ratio"
+  NR06: "Connected to multiple high-risk accounts"
+  CM01: "High risk across all three layers (account, transaction, network)"
+  CM02: "Matches known Japan scam pattern (victim-opened IB + rapid transfer)"
+  CM03: "Part of active mule network cluster"

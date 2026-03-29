@@ -1,0 +1,63 @@
+<NAME>
+Introduce interaction features between high transaction volume and suspicious device activity, which are common in fraud patterns like ore ore scams.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    feats = pd.DataFrame(index=df.index)
+
+    # Log-transformed amount features
+    feats['log_amount'] = np.log1p(df['amount_jpy'])
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+
+    # New account + high amount interaction
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Late night + high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+
+    # Weekend transfer risk
+    feats['weekend_transfer'] = df['receiver_is_new'].fillna(0) * (df['day_of_week'] >= 5).astype(int)
+
+    # High velocity + suspicious device
+    feats['velocity_suspicious'] = (np.log1p(df['txn_count_24h']) + 1) * df['sender_suspicious_device'].fillna(0)
+
+    return feats
+=======
+# EVOLVE-BLOCK-START
+def engineer_evolved_features(df):
+    feats = pd.DataFrame(index=df.index)
+
+    # Log-transformed amount features
+    feats['log_amount'] = np.log1p(df['amount_jpy'])
+
+    # IB enablement ratio: how recently IB was enabled relative to account age
+    feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+
+    # Velocity intensity: volume per transaction in recent window
+    feats['avg_recent_txn_amount'] = np.log(df['txn_volume_24h']) - np.log(df['txn_count_24h'] + 1)
+    
+    # New account + high amount interaction
+    feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * (df['is_high_amount'].fillna(0))**2
+
+    # Late night + high amount risk
+    feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * (df['is_high_amount'].fillna(0))
+    
+    # Weekend transfer risk amplified by high volume/amount
+    feats['weekend_transfer_volume_amount'] = (df['day_of_week'] >= 5).astype(int) * \
+                                               ((np.log(df['txn_count_24h']) + np.log(df['amount_jpy'])) / np.sqrt(df['receiver_account_age_days'] + 1))
+
+    # Interaction between high transaction volume and suspicious device activity
+    feats['volume_suspicious_device_interaction'] = (df['txn_volume_24h'].fillna(0) > 5.0).astype(int) * df['sender_suspicious_device'].fillna(0)
+    
+    return feats
+>>>>>>> REPLACE
+
+</DIFF>

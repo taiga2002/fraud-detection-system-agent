@@ -1,0 +1,103 @@
+==========Running program evaluation 1/3...==========
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.001275 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 3423
+[LightGBM] [Info] Number of data points in the train set: 8000, number of used features: 32
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Info] Start training from score 0.051000
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+Training until validation scores don't improve for 20 rounds
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+Did not meet early stopping. Best iteration is:
+[199]	val's l2: 6.55724e-06
+==========Run 1/3 completed in 1.38 seconds==========
+==========Running program evaluation 2/3...==========
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.001139 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 3422
+[LightGBM] [Info] Number of data points in the train set: 8000, number of used features: 32
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Info] Start training from score 0.051000
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+Training until validation scores don't improve for 20 rounds
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+Did not meet early stopping. Best iteration is:
+[200]	val's l2: 3.67418e-05
+==========Run 2/3 completed in 1.35 seconds==========
+==========Running program evaluation 3/3...==========
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.001132 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 3422
+[LightGBM] [Info] Number of data points in the train set: 8000, number of used features: 32
+[LightGBM] [Warning] Unknown parameter: criterion
+[LightGBM] [Warning] Unknown parameter: min_samples_split
+[LightGBM] [Warning] Provided parameters constrain tree depth (max_depth=16) without explicitly setting 'num_leaves'. This can lead to underfitting. To resolve this warning, pass 'num_leaves' (<=65536) in params. Alternatively, pass (max_depth=-1) and just use 'num_leaves' to constrain model complexity.
+[LightGBM] [Info] Start training from score 0.051000
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+Training until validation scores don't improve for 20 rounds
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+Did not meet early stopping. Best iteration is:
+[200]	val's l2: 8.96563e-06
+==========Run 3/3 completed in 1.37 seconds==========
+Correctness and error status saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results/gen_16/results/correct.json
+Metrics saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results/gen_16/results/metrics.json

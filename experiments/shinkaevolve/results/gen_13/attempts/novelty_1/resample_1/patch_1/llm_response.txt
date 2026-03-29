@@ -1,0 +1,161 @@
+<NAME>
+Create additional interaction features focusing on high-risk patterns such as late-night transfers and suspicious devices.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Interaction between recent IB enablement and account age
+# Balance drain with recent IB enablement
+# New interaction features
+feats['balance_drain_recent_ib'] = (
+    df['balance_drain_ratio'].fillna(0) *
+    np.where(df['sender_ib_days_since_enabled'].fillna(9999) <= 30, 1, 0)).clip(lower=0)
+
+feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+
+# Relative amount to mean transaction in recent window
+feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+
+# Velocity intensity: volume per transaction in recent window
+feats['avg_recent_txn_amount'] = (df['txn_volume_24h'] / (df['txn_count_24h'] + 1)).clip(lower=0.0, upper=None)
+
+# Interaction between new account and high amount
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Balance drain with first transfer interaction
+feats['drain_first_transfer_interaction'] = (df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)).clip(lower=0.0, upper=None)
+
+# Interaction between late night and high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Interaction between high velocity and suspicious device
+# Interaction between high velocity and suspicious device, with numeric component for weight
+feats['high_velocity_weighted_device'] = (df['txn_count_24h'].fillna(0) * df['sender_suspicious_device'].fillna(0)).clip(lower=0)
+=======
+# Additional interaction features focusing on high-risk patterns such as late-night transfers and suspicious devices
+feats['balance_drain_recent_ib'] = (
+    df['balance_drain_ratio'].fillna(0) *
+    np.where(df['sender_ib_days_since_enabled'].fillna(9999) <= 30, 1, 0)).clip(lower=0)
+
+feats['recent_ib_age_ratio'] = (df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)).clip(lower=0.01, upper=None)
+
+# Relative amount to mean transaction in recent window
+feats['amount_to_mean_ratio'] = df['amount_jpy'] / (df['sender_mean_amount'] + 1)
+
+# Velocity intensity: volume per transaction in recent window
+feats['avg_recent_txn_amount'] = (df['txn_volume_24h'] / (df['txn_count_24h'] + 1)).clip(lower=0.0, upper=None)
+
+# Interaction between new account and high amount
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Balance drain with first transfer interaction
+feats['drain_first_transfer_interaction'] = (df['balance_drain_ratio'].fillna(0) * df['first_transfer'].fillna(0)).clip(lower=0.0, upper=None)
+
+# Interaction between late night and high amount risk
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+
+# Interaction between high velocity and suspicious device
+feats['high_velocity_weighted_device'] = (df['txn_count_24h'].fillna(0) * df['sender_suspicious_device'].fillna(0)).clip(lower=0)
+
+# Additional interaction features for late night transfers with suspicious devices
+feats['late_night_suspicious_device'] = df['is_late_night'].fillna(0) * df['sender_suspicious_device'].fillna(0)
+feats['late_night_high_amount_suspicious_device'] = feats['late_night_suspicious_device'] * feats['late_night_high_amount']
+>>>>>>> REPLACE
+</DIFF>
+
+<NAME>
+Adjust the model parameters to better capture high-risk patterns and improve regularization.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'renum_leaves': 25,
+        'learning_rate': 0.07,
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.75,
+        'bagging_freq': 5,
+        'max_depth': -1,  # allow unlimited depth for flexibility
+        'min_child_samples': 40,
+        'scale_pos_weight': 20,  # higher weight to handle class imbalance
+        'lambda_l1': 0.3,
+        'lambda_l2': 1.5,
+        'verbose': -1,
+    }
+# EVOLVE-BLOCK-END
+=======
+'renum_leaves': 31,
+        'learning_rate': 0.05,
+        'feature_fraction': 0.8,
+        'bagging_fraction': 0.75,
+        'bagging_freq': 6,
+        'max_depth': -1,  # allow unlimited depth for flexibility
+        'min_child_samples': 45,
+        'scale_pos_weight': 15,  # higher weight to handle class imbalance
+        'lambda_l1': 0.2,
+        'lambda_l2': 1.0,
+        'verbose': -1,
+    }
+# EVOLVE-BLOCK-END
+>>>>>>> REPLACE
+</DIFF>
+
+<NAME>
+Enhance the fusion score function by incorporating non-linear amplification for account risk and interaction terms.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+    """
+    Combine transfer risk and account risk into a final suspicious-transfer score.
+
+    Args:
+        transfer_risk_scores: numpy array of P(fraud) from the LightGBM model
+        account_risk_scores: numpy array of sender_account_risk_score
+
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    # Weighted fusion: transfer risk dominates, account risk amplifies non-linearly
+    w_transfer = 0.85
+    w_account = np.power(account_risk_scores + 0.1, 2) * 0.15
+
+    fused = w_transfer * transfer_risk_scores + w_account
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused, 92))
+
+    return fused, threshold
+# EVOLVE-BLOCK-END
+=======
+def compute_fusion_score(transfer_risk_scores, account_risk_scores):
+    """
+    Combine transfer risk and account risk into a final suspicious-transfer score.
+
+    Args:
+        transfer_risk_scores: numpy array of P(fraud) from the LightGBM model
+        account_risk_scores: numpy array of sender_account_risk_score
+
+    Returns:
+        fused_scores: numpy array of final risk scores (0-1)
+        threshold: float, decision threshold for alerting
+    """
+    # Weighted fusion: transfer risk dominates, account risk amplifies non-linearly
+    w_transfer = 0.85
+    w_account = np.power(account_risk_scores + 0.1, 2) * 0.15
+
+    fused = w_transfer * transfer_risk_scores + w_account
+
+    # Adaptive threshold: use percentile-based to handle varying score ranges
+    # Target ~5-8% alert rate (matching approximate fraud rate)
+    threshold = float(np.percentile(fused, 92))
+
+    # Non-linear amplification for high-risk interaction terms
+    fused[fused > 0.7] *= 1.3
+
+    return fused, threshold
+# EVOLVE-BLOCK-END
+>>>>>>> REPLACE
+</DIFF>

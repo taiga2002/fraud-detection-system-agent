@@ -1,0 +1,25 @@
+<NAME>
+Create a feature for detecting rapid pass-through transactions, which is common in mule accounts.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+=======
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+
+# Detect rapid pass-through transactions (common in mule accounts)
+feats['rapid_pass_through'] = np.where((df['txn_count_24h'] > 5), 
+                                       np.clip(np.log(df['amount_jpy']), -1, 1),
+                                       0.0
+                                      )
+
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>

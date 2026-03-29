@@ -1,0 +1,14 @@
+{
+  "generation": 7,
+  "novelty_attempt": 1,
+  "resample_attempt": 1,
+  "patch_attempt": 2,
+  "success": true,
+  "num_applied": 3,
+  "patch_name": "none",
+  "patch_description": "This new interaction captures scenarios where a user with recent internet banking access and possibly fraudulent activity (suspicious device) engages in rapid transactions, which can indicate a money muling operation.",
+  "error_msg": null,
+  "timestamp": "2026-03-21T00:05:31.297007",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

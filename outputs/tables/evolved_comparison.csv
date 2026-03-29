@@ -1,0 +1,3 @@
+policy,threshold,precision,recall,f1_score,prevented_loss,prevention_rate,total_fraud_loss,alert_rate,total_alerts,true_positives,false_positives,true_negatives,false_negatives
+Step 2 Fusion Baseline,0.3,0.8674242424242424,1.0,0.9290060851926978,9189388706,1.0,9189388706,0.05808,2904,2519,385,47096,0
+Step 3 Evolved,0.5789267873576293,0.9909341742215215,0.9980150853513299,0.9944620253164557,9152782967,0.9960165207750872,9189388706,0.05074,2537,2514,23,47458,5

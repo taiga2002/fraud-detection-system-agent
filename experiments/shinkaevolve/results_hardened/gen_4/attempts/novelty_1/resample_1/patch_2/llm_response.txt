@@ -1,0 +1,29 @@
+<NAME>
+Add log transformation for amount_jpy and interaction features focusing on weekend and late-night transfers.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+=======
+# Log transform amount_jpy
+feats['log_amount_jpy'] = np.log(df['amount_jpy'] + 1)
+
+# Interaction features focusing on weekend and late-night transfers
+feats['high_amt_weekend'] = df['is_high_amount'].fillna(0) * df['is_weekend'].fillna(0)
+feats['very_high_amt_late_night'] = df['is_very_high_amount'].fillna(0) * df['is_late_night'].fillna(0)
+
+# Velocity intensity with log transform of amount
+feats['log_avg_recent_txn_amount'] = np.log(df['txn_volume_24h'] + 1) / (df['txn_count_24h'] + 1)
+
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+
+>>>>>>> REPLACE
+</DIFF>

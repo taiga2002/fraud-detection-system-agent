@@ -1,0 +1,63 @@
+<NAME>
+Introduce a new interaction feature capturing high transaction amounts during off-peak hours, which is common in fraud patterns.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['late_night_txn_volume'] = df['is_late_night'].astype(int) * np.log(df['txn_count_24h'])
+=======
+# Introduce new feature for high transaction amounts during off-peak hours
+feats['off_peak_high_amount'] = (df['hour'].isin([0, 1, 23]).astype(int)) * df['is_high_amount'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Adjust the model parameters to better handle class imbalance and reduce overfitting.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'min_child_samples': 40,
+=======
+'min_child_samples': 50,
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DIFF>
+<<<<<<< SEARCH
+'lambda_l1': 0.1,
+=======
+'lambda_l1': 0.2,
+>>>>>>> REPLACE
+
+</DIFF>
+
+<DIFF>
+<<<<<<< SEARCH
+'bagging_freq': 5,
+=======
+'bagging_freq': 3,
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Modify the fusion score computation to better emphasize high-risk accounts.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+w_account = 0.20
+fused = w_transfer * transfer_risk_scores + w_account * account_risk_scores
+=======
+# Higher weight on account risk for elevated scores
+w_account = 0.30
+
+# Adjust weights dynamically based on account risk level
+high_account_risk_scale = np.where(account_risk_scores > 0.3, 1.2, 1)
+fused = w_transfer * transfer_risk_scores + high_account_risk_scale * w_account * account_risk_scores 
+>>>>>>> REPLACE
+
+</DIFF>

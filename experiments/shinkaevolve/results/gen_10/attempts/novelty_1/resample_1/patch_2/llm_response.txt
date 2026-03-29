@@ -1,0 +1,22 @@
+<NAME>
+Add interaction features that capture the riskiness of recent transfers and new accounts.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)
+    
+    return feats
+=======
+feats['velocity_score'] = df['txn_count_24h'].fillna(0) / (df['amount_jpy'] + 1)
+
+    # Recent activity with new account interaction
+    feats['recent_activity_new_acct'] = df['has_recent_activity'].fillna(0) * df['receiver_is_new'].fillna(0)
+
+    # High amount transfer and new receiver interaction
+    feats['high_amount_new_receiver'] = df['is_high_amount'].fillna(0) * df['receiver_is_new'].fillna(0)
+    
+    return feats
+>>>>>>> REPLACE
+
+</DIFF>

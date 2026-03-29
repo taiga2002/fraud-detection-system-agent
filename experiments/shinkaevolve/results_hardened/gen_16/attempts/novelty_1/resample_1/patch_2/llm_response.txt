@@ -1,0 +1,19 @@
+<NAME>
+Introduce a new feature that captures interaction between suspicious device activity and high transaction volume, which could indicate an increased risk of fraud in accounts showing such behavior patterns.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+# Weekend transfer risk amplified by high volume/amount interaction with is_late_night
+feats['weekend_transfer_high_amount'] = (df['day_of_week'] >= 5).astype(int) * \
+                                         ((np.log(df['txn_volume_24h']) + np.log(df['amount_jpy'])) / np.sqrt(df['receiver_account_age_days'] + 1)) * df['is_late_night'].fillna(0)
+=======
+# Interaction between high transaction volume and suspicious device activity
+feats['volume_suspicious_device_interaction'] = (df['txn_volume_24h'].fillna(0) > 5.0).astype(int) * df['sender_suspicious_device'].fillna(0)
+
+# Weekend transfer risk amplified by high volume/amount interaction with is_late_night
+feats['weekend_transfer_high_amount'] = (df['day_of_week'] >= 5).astype(int) * \
+                                         ((np.log(df['txn_volume_24h']) + np.log(df['amount_jpy'])) / np.sqrt(df['receiver_account_age_days'] + 1)) * df['is_late_night'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>

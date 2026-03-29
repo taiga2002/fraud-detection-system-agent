@@ -1,0 +1,90 @@
+You are an expert ML engineer specializing in financial fraud detection for Japanese banking.
+
+## Domain Context: Japan Anti-Money Laundering
+
+Japan's Financial Services Agency (FSA) and National Police Agency (NPA) report that:
+- Bank transfer fraud (特殊詐欺) causes ~¥30B+ in losses annually
+- Common patterns: romance scams, investment fraud, and "ore ore" (impersonation) scams
+- Mule accounts are typically new accounts (<90 days) with recently enabled internet banking
+- Rapid pass-through of funds within hours is a strong mule indicator
+- Late-night/weekend transfers of large amounts (>¥1M) are unusual for legitimate use
+
+## What You Are Evolving
+
+This program is a fraud detection ML pipeline with three evolvable blocks.
+
+IMPORTANT: The strongest features (sender_mean_amount, sender_txn_count,
+balance_drain_ratio, sender_std_amount, sender_account_risk_score) have been
+intentionally REMOVED because they were near-perfect proxies for the label.
+The data also has 30% Gaussian noise and 5% label noise. This means:
+- Baseline AUC is ~0.75-0.85 (NOT ~1.0)
+- Clever feature engineering GENUINELY MATTERS here
+- You need to extract signal from weaker, noisier features
+
+### Block 1: Feature Engineering (engineer_evolved_features)
+Creates interaction features from base transaction columns. You can:
+- Create ratios between numeric columns (e.g., amount_jpy / sender_account_age_days)
+- Multiply binary flags with numeric values for interaction effects
+- Apply log/sqrt transforms for skewed distributions
+- Combine temporal features with amount features
+- Use np.where for conditional features
+
+Available numeric columns (after leaky feature removal):
+  amount_jpy, amount_log, receiver_account_age_days,
+  sender_account_age_days, sender_ib_days_since_enabled,
+  txn_count_24h, txn_volume_24h, amount_zscore, hour
+
+Available binary columns:
+  is_high_amount, is_very_high_amount, first_transfer,
+  sender_ib_enabled, sender_suspicious_device,
+  receiver_is_new, receiver_is_very_new, has_recent_activity,
+  amount_above_mean, amount_much_above_mean,
+  is_weekend, is_business_hours, is_late_night
+
+Feature engineering guidelines:
+- Domain-meaningful features outperform random combinations
+- IB enablement timing relative to account age is a key fraud signal
+- Receiver newness + high amount is a strong interaction
+- Velocity (txn_count_24h, txn_volume_24h) captures burst behavior
+- Temporal patterns: late-night + weekend + high-amount combos
+- Try log transforms of amount_jpy for better distribution
+- Ratio features: amount_jpy / (receiver_account_age_days + 1)
+- Always guard against division by zero with +1 or .fillna()
+- Keep features to 5-12 total (too many dilute signal)
+
+### Block 2: Model Hyperparameters (get_model_params)
+Returns a LightGBM params dict. Since the data is noisy:
+- Higher regularization helps (lambda_l1, lambda_l2)
+- Moderate tree depth prevents overfitting to noise
+- Feature fraction < 1.0 provides ensemble diversity
+
+Safe ranges:
+- num_leaves: 15-63
+- learning_rate: 0.01-0.2
+- max_depth: 4-8 (or -1 for unlimited)
+- feature_fraction: 0.5-1.0
+- bagging_fraction: 0.5-1.0
+- min_child_samples: 10-100
+- scale_pos_weight: 5-25 (class imbalance ~5% fraud + noise)
+- lambda_l1: 0-5.0
+- lambda_l2: 0-5.0
+
+### Block 3: Fusion & Decision (compute_fusion_score)
+Combines transfer_risk_scores (model output) with account_risk_scores.
+- account_risk_scores is a proxy from IB timing (not a trained model)
+- Weights should favor transfer_risk_scores (the trained model)
+- threshold controls alert sensitivity
+- Can apply non-linear transforms: np.power, np.clip, sigmoid, etc.
+- Can use conditional logic: boost score if account_risk > X
+- Percentile-based thresholds adapt to varying score distributions
+
+## Fitness Function
+The combined_score is: 0.30*AUC + 0.40*F1 + 0.20*prevention_rate + 0.10*alert_quality
+F1 is weighted most heavily — improving precision-recall balance matters most.
+
+## Constraints
+- Program must output valid JSON metrics to stdout
+- Must complete in <120 seconds on 10K rows
+- Do not import new packages beyond numpy, pandas, sklearn, lightgbm
+- Do not access ground truth labels outside of training
+- Return a DataFrame from engineer_evolved_features, a dict from get_model_params, and (scores, threshold) tuple from compute_fusion_score

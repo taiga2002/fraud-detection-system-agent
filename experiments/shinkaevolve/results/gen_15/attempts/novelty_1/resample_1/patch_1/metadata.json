@@ -1,0 +1,14 @@
+{
+  "generation": 15,
+  "novelty_attempt": 1,
+  "resample_attempt": 1,
+  "patch_attempt": 1,
+  "success": true,
+  "num_applied": 1,
+  "patch_name": "none",
+  "patch_description": "Inspired by previous approaches, this novel fraud detection pipeline combines advanced feature engineering techniques specific to Japanese banking fraud patterns with an optimized LightGBM model. The key insights include focusing on recent Internet Banking (IB) enablement timing, interaction between high amounts and new accounts/receivers, velocity ratios, and conditional risk amplification based on account history.\n\nThe program introduces novel features such as the ratio of IB enablement days to sender account age, interactions with high amounts and suspicious devices/new receivers, velocity intensity measures, and elevated risk conditions. It also optimizes model hyperparameters for better performance and uses a robust fusion mechanism that boosts scores under certain risky conditions.",
+  "error_msg": null,
+  "timestamp": "2026-03-21T00:22:59.027345",
+  "llm_cost": 0.0,
+  "llm_model": null
+}

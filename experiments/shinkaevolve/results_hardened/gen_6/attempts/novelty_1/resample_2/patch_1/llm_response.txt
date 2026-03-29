@@ -1,0 +1,64 @@
+<NAME>
+Create new interaction features based on temporal patterns and amount interactions, as well as improve the model hyperparameters for better regularization to handle noisy data.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+=======
+# New interaction features
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+
+# Temporal patterns
+feats['weekend_with_high_volume'] = (df['txn_count_24h'].fillna(0) > 1) * df['is_weekend'].fillna(0)
+feats['late_night_with_high_amount'] = df['amount_jpy'].apply(lambda x: int(x > 500000)) * df['is_late_night']
+feats['weekend_with_suspicious_device'] = df['sender_suspicious_device'].fillna(0) * df['is_weekend']
+
+# Amount interactions
+feats['amount_per_txn'] = df['txn_volume_24h'].fillna(1) / (df['txn_count_24h'] + 1)
+feats['ratio_to_account_age'] = df['amount_jpy'] / (df['receiver_account_age_days'] + 1)
+
+# Velocity + suspicious device
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+>>>>>>> REPLACE
+
+</DIFF>
+<DIFF>
+<<<<<<< SEARCH
+'num_leaves': 31,
+'max_depth': 6,
+'tree_limit': 200,
+=======
+# Improved hyperparameters for regularization and diversity
+'num_leaves': 45, # increased to capture more patterns while avoiding overfitting
+'max_depth': -1, # unlimited depth but balanced by early stopping and l1/l2 reg
+'learning_rate': 0.03, # slower learning rate for better convergence on noisy data
+'feature_fraction': 0.75, # lower fraction for more diversity in the ensemble
+'bagging_fraction': 0.65,
+'min_child_samples': 50, # increased to prevent overfitting
+'scale_pos_weight': 20, # adjusted to better deal with class imbalance after noise
+'lambda_l1': 0.3, # higher regularization for noisy data
+'lambda_l2': 0.5,
+>>>>>>> REPLACE
+
+</DIFF>
+<DIFF>
+<<<<<<< SEARCH
+# Weighted fusion: transfer risk dominates, account risk amplifies
+w_transfer = 0.80
+w_account = 0.20
+=======
+# More aggressive weighting towards transfer_risk_scores due to noise reduction from feature engineering
+w_transfer = 0.95
+w_account = 0.05
+
+# Adaptive alert rate targeting 3-7%
+threshold = np.percentile(fused, 89)
+>>>>>>> REPLACE
+
+</DIFF>

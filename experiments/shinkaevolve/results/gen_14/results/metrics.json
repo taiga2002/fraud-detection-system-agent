@@ -1,0 +1,15 @@
+{
+    "combined_score": 0.9335829652232946,
+    "combined_score_std": 4.245551907405924e-06,
+    "roc_auc": 0.9999879474093817,
+    "roc_auc_std": 1.0613879768466782e-05,
+    "f1_score": 0.7786259541984734,
+    "prevention_rate": 1.0,
+    "alert_quality": 1.0,
+    "num_runs": 3,
+    "execution_time_mean": 0.133890236330141,
+    "execution_time_std": 0.004579337116210869,
+    "num_valid_runs": 3,
+    "num_invalid_runs": 0,
+    "all_validation_errors": []
+}

@@ -1,0 +1,4 @@
+==========Running program evaluation 1/3...==========
+Evaluation error: name 'get_model_params' is not defined
+Correctness and error status saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results_hardened/gen_10/results/correct.json
+Metrics saved to /Users/tkitao1/Desktop/sakana-ai-2/experiments/shinkaevolve/results_hardened/gen_10/results/metrics.json

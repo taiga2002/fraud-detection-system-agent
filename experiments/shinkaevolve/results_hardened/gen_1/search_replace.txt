@@ -1,0 +1,69 @@
+<NAME>
+Create interaction features focusing on temporal patterns and velocity signals, enhancing fraud detection.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+feats['ib_age_ratio'] = df['sender_ib_days_since_enabled'].fillna(9999) / (df['sender_account_age_days'] + 1)
+=======
+# New interaction features focused on temporal and velocity patterns
+feats['ib_age_ratio_log'] = np.log(df['sender_ib_days_since_enabled'].fillna(9999)) - np.log(df['sender_account_age_days'] + 1)
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+feats['avg_recent_txn_amount'] = df['txn_volume_24h'] / (df['txn_count_24h'] + 1)
+=======
+feats['avg_recent_txn_amount_sqrt'] = np.sqrt(df['txn_volume_24h']) / (np.sqrt(df['txn_count_24h'] + 1))
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# New interaction features focused on temporal and velocity patterns
+feats['new_acct_high_amount'] = df['receiver_is_new'].fillna(0) * df['is_high_amount'].fillna(0)
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+=======
+# New interaction features focused on temporal and velocity patterns
+feats['late_night_high_amount'] = df['is_late_night'].fillna(0) * df['is_high_amount'].fillna(0)
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+=======
+# New interaction features focused on temporal and velocity patterns
+feats['first_txn_new_receiver'] = df['first_transfer'].fillna(0) * df['receiver_is_new'].fillna(0)
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+feats['velocity_suspicious'] = (df['txn_count_24h'].fillna(0) + 1) * df['sender_suspicious_device'].fillna(0)
+=======
+# Velocity with suspicious device interaction
+feats['velocity_suspicious'] = (np.log(df['txn_count_24h'] + 1.5)) * df['sender_suspicious_device']
+# Temporal risk pattern: late night, weekend high-amount transfer
+feats['late_night_weekend_high_amount'] = (df['is_late_night'].fillna(0) +
+                                           df['is_weekend'].fillna(0)) > 1.5 * df['is_high_amount']
+>>>>>>> REPLACE
+
+</DIFF>
+
+<NAME>
+Add noise regularization to prevent overfitting and improve robustness.
+</DESCRIPTION>
+
+<DIFF>
+<<<<<<< SEARCH
+'lambda_l1': 0.1,
+=======
+'lambda_l1': 0.5,
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+'lambda_l2': 1.0,
+=======
+'lambda_l2': 2.0,
+>>>>>>> REPLACE
+
+</DIFF>
