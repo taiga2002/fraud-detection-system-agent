@@ -1,4 +1,4 @@
-# Fraud Detection System Agent
+# ShinkaEvolve Fraud Detection Agent
 ## Introduction
 This project applies ShinkaEvolve, a framework for LLM-guided program evolution, to the domain of Japanese banking fraud detection. ShinkaEvolve uses large language models to iteratively mutate and improve code through evolutionary search that autonomously discovers new detection logic and evolves its own features without human redesign, adapting as fraud patterns shift.
 
