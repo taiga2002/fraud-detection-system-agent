@@ -1,7 +1,8 @@
 # Fraud Detection System Agent
-### LLM-Guided Pipeline Evolution with Task Calibration Insights
+## Introduction
+This project applies ShinkaEvolve, a framework for LLM-guided program evolution, to the domain of Japanese banking fraud detection. ShinkaEvolve uses large language models to iteratively mutate and improve code through evolutionary search that autonomously discovers new detection logic and evolves its own features without human redesign, adapting as fraud patterns shift.
 
-Using **ShinkaEvolve** to evolve an ML fraud detection pipeline — features, hyperparameters, and fusion logic — for Japanese online banking scams. The LLM discovers domain-specific interaction features that improve F1 by 45% on realistic (hardened) data.
+**What I built**: A three-layer fraud detection system with an autonomous agent loop that analyzes account profiles, transaction behavior, and network patterns to identify money laundering with 99.1% precision and 99.8% recall on synthetic data calibrated to official Japanese government statistics — and continuously self-improves when performance degrades.
 
 ---
 
