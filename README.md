@@ -1,4 +1,4 @@
-# ShinkaEvolve for Japanese Banking Fraud Detection
+# Fraud Detection System Agent
 ### LLM-Guided Pipeline Evolution with Task Calibration Insights
 
 Using **ShinkaEvolve** to evolve an ML fraud detection pipeline — features, hyperparameters, and fusion logic — for Japanese online banking scams. The LLM discovers domain-specific interaction features that improve F1 by 45% on realistic (hardened) data.
@@ -275,4 +275,3 @@ See [experiments/agent_loop/README.md](experiments/agent_loop/README.md) for ful
 [3] FSA Japan — Online banking fraud statistics (FY2024)
 
 [4] NPA Japan — Special fraud (特殊詐欺) reports
-# fraud-detection-system-agent
